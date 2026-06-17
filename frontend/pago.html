@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago | StarView</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-body">
+
+<header class="topbar app-topbar">
+    <div class="brand">STAR<span>VIEW</span></div>
+
+    <nav class="nav">
+        <a href="home.html">Inicio</a>
+        <a href="mi-lista.html">Mi Lista</a>
+        <a href="planes.html">Planes</a>
+        <a href="suscripcion.html">Suscripción</a>
+        <a href="index.html" onclick="cerrarSesion()">Cerrar sesión</a>
+    </nav>
+</header>
+
+<main class="page-top pago-section">
+    <p class="eyebrow">Pago seguro</p>
+
+    <h1>Confirmar suscripción</h1>
+
+    <p class="section-subtitle">
+        Revisa tu plan seleccionado y elige un método de pago antes de activar tu suscripción.
+    </p>
+
+    <section class="pago-card">
+
+        <div class="pago-resumen">
+            <h2 id="nombrePlan">Plan seleccionado</h2>
+
+            <div class="detail-row">
+                <span>Precio mensual</span>
+                <strong id="precioPlan">S/ 0.00</strong>
+            </div>
+
+            <div class="detail-row total-row">
+                <span>Total a pagar</span>
+                <strong id="totalPago">S/ 0.00</strong>
+            </div>
+        </div>
+
+        <div class="payment-box">
+            <h3>Método de pago</h3>
+
+            <p>
+                Selecciona cómo deseas realizar el pago simulado de tu suscripción.
+            </p>
+
+            <div class="payment-methods">
+
+                <label class="payment-option payment-card-option active" onclick="seleccionarMetodoPago('Tarjeta simulada', this)">
+                    <input type="radio" name="metodo_pago" value="Tarjeta simulada" checked>
+
+                    <div class="flip-card">
+                        <div class="flip-card-inner">
+
+                            <div class="flip-card-front">
+                                <p class="heading_8264">MASTERCARD</p>
+
+                                <svg class="logo" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 48 48">
+                                    <path fill="#ff9800" d="M32 10A14 14 0 1 0 32 38A14 14 0 1 0 32 10Z"></path>
+                                    <path fill="#d50000" d="M16 10A14 14 0 1 0 16 38A14 14 0 1 0 16 10Z"></path>
+                                    <path fill="#ff3d00" d="M18,24c0,4.755,2.376,8.95,6,11.48c3.624-2.53,6-6.725,6-11.48s-2.376-8.95-6-11.48C20.376,15.05,18,19.245,18,24z"></path>
+                                </svg>
+
+                                <div class="chip-card">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+
+                                <div class="contactless-card">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+
+                                <p class="number">0000 0000 0000 0000</p>
+                                <p class="valid_thru">VALID THRU</p>
+                                <p class="date_8264">12 / 26</p>
+                                <p class="name">STARVIEW USER</p>
+                            </div>
+
+                            <div class="flip-card-back">
+                                <div class="strip"></div>
+                                <div class="mstrip"></div>
+                                <div class="sstrip">
+                                    <p class="code">***</p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="payment-card-text">
+                        <strong>Tarjeta simulada</strong>
+                        <span>Visa, Mastercard o débito</span>
+                    </div>
+                </label>
+
+                <label class="payment-option logo-payment-option" onclick="seleccionarMetodoPago('Yape / Plin simulado', this)">
+                    <input type="radio" name="metodo_pago" value="Yape / Plin simulado">
+
+                    <div class="payment-logo-box yape-box">
+                        <img src="img/yape.png" alt="Yape" class="payment-logo-img">
+                    </div>
+
+                    <div class="payment-logo-text">
+                        <strong>Yape / Plin</strong>
+                        <span>Número, titular, operación y QR</span>
+                    </div>
+                </label>
+
+                <label class="payment-option logo-payment-option" onclick="seleccionarMetodoPago('PayPal simulado', this)">
+                    <input type="radio" name="metodo_pago" value="PayPal simulado">
+
+                    <div class="payment-logo-box paypal-box">
+                        <img src="img/paypal.png" alt="PayPal" class="payment-logo-img">
+                    </div>
+
+                    <div class="payment-logo-text">
+                        <strong>PayPal</strong>
+                        <span>Correo, operación y QR</span>
+                    </div>
+                </label>
+
+            </div>
+        </div>
+
+        <div id="datosTarjeta" class="payment-form payment-panel active-panel">
+            <h3>Datos de tarjeta simulada</h3>
+
+            <label>Número de tarjeta</label>
+            <input type="text" id="numeroTarjeta" placeholder="0000 0000 0000 0000" maxlength="19">
+
+            <div class="form-grid-2">
+                <div>
+                    <label>Vencimiento</label>
+                    <input type="text" id="vencimientoTarjeta" placeholder="MM/AA" maxlength="5">
+                </div>
+
+                <div>
+                    <label>CVV</label>
+                    <input type="password" id="cvvTarjeta" placeholder="***" maxlength="3">
+                </div>
+            </div>
+        </div>
+
+        <div id="datosYape" class="payment-form payment-panel">
+            <h3>Validación por Yape / Plin</h3>
+
+            <p class="payment-panel-text">
+                Ingresa tu número de celular, el titular y el código de operación. También puedes escanear el QR desde tu móvil.
+            </p>
+
+            <div class="qr-payment-layout">
+                <div>
+                    <label>Número de celular</label>
+                    <input type="text" id="numeroYape" placeholder="Ejemplo: 987654321" maxlength="9">
+
+                    <label>Nombre del titular</label>
+                    <input type="text" id="titularYape" placeholder="Nombre del titular">
+
+                    <label>Código de operación</label>
+                    <input type="text" id="codigoYape" placeholder="Ejemplo: YAPE123456">
+                </div>
+
+                <div class="qr-box">
+                    <img src="img/qr-yape.png" alt="QR Yape" class="qr-img">
+                    <span>Escanea para pagar</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="datosPaypal" class="payment-form payment-panel">
+            <h3>Validación por PayPal</h3>
+
+            <p class="payment-panel-text">
+                Ingresa el correo asociado a tu cuenta PayPal y el código de operación del pago simulado.
+            </p>
+
+            <div class="qr-payment-layout">
+                <div>
+                    <label>Correo PayPal</label>
+                    <input type="email" id="correoPaypal" placeholder="correo@ejemplo.com">
+
+                    <label>Código de operación</label>
+                    <input type="text" id="codigoPaypal" placeholder="Ejemplo: PAYPAL123456">
+                </div>
+
+                <div class="qr-box paypal-qr">
+                    <img src="img/qr-paypal.png" alt="QR PayPal" class="qr-img">
+                    <span>Escanea o valida con correo</span>
+                </div>
+            </div>
+        </div>
+
+        <p class="payment-note">
+            Este prototipo simula el pago de la suscripción para fines académicos. No ingreses datos reales de tarjetas.
+        </p>
+
+        <button type="button" class="btn btn-primary btn-full" onclick="confirmarPago(event)">
+            Confirmar Pago
+        </button>
+
+        <p id="mensajePago" class="mensaje"></p>
+
+    </section>
+</main>
+
+<script src="js/pago.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor | StarView</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="player-body">
+
+<header class="topbar app-topbar">
+    <div class="brand">STAR<span>VIEW</span></div>
+
+    <nav class="nav">
+        <a href="home.html">Inicio</a>
+        <a href="mi-lista.html">Mi Lista</a>
+        <a href="seleccionar-perfil.html">Cambiar perfil</a>
+    </nav>
+</header>
+
+<main class="player-layout">
+    <section class="player-info">
+        <img id="imagenContenido" class="player-poster" alt="Poster del contenido">
+
+        <div>
+            <p class="eyebrow">Reproduciendo ahora</p>
+            <h1 id="tituloContenido"></h1>
+            <p id="tipoContenido" class="meta-line"></p>
+            <p id="generoContenido" class="meta-line"></p>
+            <p id="descripcionContenido" class="player-description"></p>
+
+            <div class="player-actions">
+                <button class="btn btn-primary" onclick="marcarVisto()">Marcar como visto</button>
+                <a href="home.html" class="btn btn-secondary">Volver al catálogo</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="video-shell">
+        <video id="videoPlayer" controls poster="img/backdrop.jpg">
+            <source src="videos/demo.mp4" type="video/mp4">
+            Tu navegador no soporta video.
+        </video>
+
+        <p class="hint">
+            El progreso se guarda automáticamente para el perfil seleccionado.
+        </p>
+    </section>
+</main>
+
+<script src="js/reproductor.js"></script>
+</body>
+</html>

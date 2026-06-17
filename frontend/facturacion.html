@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facturación | StarView</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-body">
+
+<header class="topbar app-topbar">
+    <div class="brand">STAR<span>VIEW</span></div>
+
+    <nav class="nav">
+        <a href="home.html">Inicio</a>
+        <a href="mi-lista.html">Mi Lista</a>
+        <a href="planes.html">Planes</a>
+        <a href="facturacion.html" class="activo">Facturación</a>
+        <a href="suscripcion.html">Suscripción</a>
+        <a href="index.html" onclick="cerrarSesion()">Cerrar sesión</a>
+    </nav>
+</header>
+
+<main class="facturacion-section page-top">
+    <p class="eyebrow">Pagos</p>
+    <h1>Historial de facturación</h1>
+    <p class="section-subtitle">Consulta tus pagos realizados y descarga tus recibos.</p>
+
+    <div class="tabla-contenedor">
+        <table class="tabla-facturacion">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Plan</th>
+                    <th>Monto</th>
+                    <th>Método</th>
+                    <th>Estado</th>
+                    <th>Recibo</th>
+                </tr>
+            </thead>
+
+            <tbody id="tablaPagos"></tbody>
+        </table>
+    </div>
+</main>
+
+<script src="js/facturacion.js"></script>
+</body>
+</html>

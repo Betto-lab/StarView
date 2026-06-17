@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Lista | StarView</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-body">
+
+<header class="topbar app-topbar">
+    <div class="brand">STAR<span>VIEW</span></div>
+
+    <nav class="nav">
+        <a href="home.html">Inicio</a>
+        <a href="mi-lista.html" class="activo">Mi Lista</a>
+        <a href="planes.html">Planes</a>
+        <a href="seleccionar-perfil.html">Cambiar perfil</a>
+        <a href="index.html" onclick="cerrarSesion()">Cerrar sesión</a>
+    </nav>
+</header>
+
+<main class="home page-top">
+    <section class="section-block">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Guardados</p>
+                <h1>Mi Lista</h1>
+                <p class="section-subtitle">Contenido guardado únicamente para el perfil actual.</p>
+            </div>
+        </div>
+
+        <div id="miLista" class="catalogo"></div>
+    </section>
+</main>
+
+<script src="js/mi-lista.js"></script>
+</body>
+</html>

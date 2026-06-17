@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio | StarView</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-body">
+
+<header class="topbar app-topbar">
+    <div class="brand">STAR<span>VIEW</span></div>
+
+    <nav class="nav">
+        <a href="home.html" class="activo">Inicio</a>
+        <a href="mi-lista.html">Mi Lista</a>
+        <a href="planes.html">Planes</a>
+        <a href="facturacion.html">Facturación</a>
+        <a href="suscripcion.html">Suscripción</a>
+        <a href="seleccionar-perfil.html">Cambiar perfil</a>
+        <a href="index.html" onclick="cerrarSesion()">Cerrar sesión</a>
+    </nav>
+</header>
+
+<section class="banner-home">
+    <div class="banner-overlay"></div>
+
+    <div class="banner-content">
+        <p class="eyebrow" id="perfilActual">StarView</p>
+        <h1>Historias para ver a tu manera.</h1>
+        <p>
+            Explora el catálogo, agrega contenido a tu lista y continúa viendo desde donde te quedaste.
+        </p>
+
+        <div class="hero-actions">
+            <a href="#catalogo" class="btn btn-primary">Explorar catálogo</a>
+            <a href="mi-lista.html" class="btn btn-secondary">Ver Mi Lista</a>
+        </div>
+    </div>
+</section>
+
+<main class="home">
+    <section class="section-block">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Tu progreso</p>
+                <h2>Continuar viendo</h2>
+            </div>
+        </div>
+
+        <div id="continuarViendo" class="catalogo"></div>
+    </section>
+
+    <section class="section-block">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Biblioteca StarView</p>
+                <h2>Catálogo de películas y series</h2>
+            </div>
+
+            <div class="busqueda">
+                <input type="text" id="buscar" placeholder="Buscar película o serie...">
+                <button class="btn btn-small" onclick="buscarContenido()">Buscar</button>
+            </div>
+        </div>
+
+        <div id="catalogo" class="catalogo"></div>
+    </section>
+
+    <section class="section-block">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">TMDb</p>
+                <h2>Tendencias populares</h2>
+            </div>
+        </div>
+
+        <div id="tmdbCatalogo" class="catalogo"></div>
+    </section>
+</main>
+
+<script src="js/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planes | StarView</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-body">
+
+<header class="topbar app-topbar">
+    <div class="brand">STAR<span>VIEW</span></div>
+
+    <nav class="nav">
+        <a href="home.html">Inicio</a>
+        <a href="mi-lista.html">Mi Lista</a>
+        <a href="planes.html" class="activo">Planes</a>
+        <a href="suscripcion.html">Suscripción</a>
+        <a href="index.html" onclick="cerrarSesion()">Cerrar sesión</a>
+    </nav>
+</header>
+
+<main id="seleccionar-plan" class="planes-section page-top">
+    <p class="eyebrow">Suscripción</p>
+    <h1>Seleccionar plan</h1>
+    <p class="section-subtitle">Selecciona un plan mensual para acceder al catálogo ilimitado.</p>
+
+    <div id="planesContainer" class="planes-container"></div>
+</main>
+
+<script src="js/planes.js"></script>
+</body>
+</html>
