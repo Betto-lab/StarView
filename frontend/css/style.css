@@ -1997,3 +1997,54 @@ textarea:focus{
         font-size:38px;
     }
 }   
+
+/* ===============================
+   CAMPO CONTRASEÑA CON BOTÓN VER
+================================ */
+
+.password-field {
+    position: relative;
+    width: 100%;
+}
+
+.password-field input {
+    width: 100%;
+    padding-right: 82px !important;
+}
+
+.password-toggle {
+    position: absolute !important;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    width: auto !important;
+    min-width: 54px;
+    height: 34px;
+    padding: 0 14px !important;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    z-index: 5;
+}
+
+.password-toggle:hover {
+    background: rgba(255, 48, 69, 0.30);
+}
+
+@media (max-width: 600px) {
+    .password-field input {
+        padding-right: 78px !important;
+    }
+
+    .password-toggle {
+        right: 10px;
+        min-width: 48px;
+        height: 32px;
+        font-size: 12px;
+        padding: 0 11px !important;
+    }
+}

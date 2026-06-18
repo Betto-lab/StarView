@@ -161,9 +161,10 @@ async function registrarUsuario() {
     const btnRegistro = document.querySelector(".btn-full");
     const textoOriginal = btnRegistro.innerText;
 
-    btnRegistro.innerText = "Procesando...";
+    btnRegistro.innerText = "Enviando código...";
     btnRegistro.disabled = true;
-
+    mostrarMensaje("Enviando código de verificación al correo...", "ok");
+    
     try {
         const respuesta = await fetch(`${API_BASE}/registro`, {
             method: "POST",
