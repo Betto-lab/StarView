@@ -12,6 +12,12 @@ require("dotenv").config({
 
 const conexion = require("./db");
 
+const { MercadoPagoConfig, Preference } = require("mercadopago");
+
+const clienteMP = process.env.MP_ACCESS_TOKEN
+    ? new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN })
+    : null;
+
 const TMDB_API_KEY = "14848f0a935d7e54d7c8ced042603214";    
 const app = express();
 
@@ -30,6 +36,11 @@ const transporter = nodemailer.createTransport({
 function validarFormatoCorreo(correo) {
     const expresion = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return expresion.test(correo);
+}
+
+function validarSoloLetras(texto) {
+    const expresion = /^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/;
+    return expresion.test(texto);
 }
 
 function validarPasswordSegura(password) {
@@ -98,6 +109,13 @@ app.post("/registro", async (req, res) => {
             mensaje: "Completa todos los campos"
         });
     }
+
+    if (!validarSoloLetras(nombre)) {
+    return res.json({
+        ok: false,
+        mensaje: "El nombre solo puede contener letras y espacios"
+    });
+}
 
     if (!validarFormatoCorreo(correo)) {
         return res.json({

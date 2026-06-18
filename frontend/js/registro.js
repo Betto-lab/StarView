@@ -1,7 +1,6 @@
 const API_BASE = window.location.origin;
 
 let correoPendiente = "";
-let codigoPendiente = "";
 
 function mostrarMensaje(texto, tipo = "error") {
     const mensaje = document.getElementById("mensaje");
@@ -24,6 +23,11 @@ function mostrarMensajeVerificacion(texto, tipo = "error") {
 function validarCorreo(correo) {
     const expresion = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return expresion.test(correo);
+}
+
+function validarNombre(nombre) {
+    const expresion = /^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/;
+    return expresion.test(nombre);
 }
 
 function validarPassword(password) {
@@ -103,11 +107,9 @@ function actualizarReglasPassword() {
     strengthText.innerText = fortaleza.texto;
 }
 
-function abrirModalVerificacion(codigo) {
-    document.getElementById("codigoMostrado").innerText = codigo;
+function abrirModalVerificacion() {
     document.getElementById("codigoVerificacion").value = "";
     mostrarMensajeVerificacion("");
-
     document.getElementById("modalVerificacion").classList.add("show");
 }
 
@@ -125,6 +127,11 @@ async function registrarUsuario() {
         return;
     }
 
+    if (!validarNombre(nombre)) {
+        mostrarMensaje("El nombre solo puede contener letras y espacios");
+        return;
+    }
+
     if (!validarCorreo(correo)) {
         mostrarMensaje("Ingresa un correo electrónico válido");
         return;
@@ -136,6 +143,12 @@ async function registrarUsuario() {
         mostrarMensaje("La contraseña debe tener mínimo 8 caracteres, 1 número y 1 símbolo");
         return;
     }
+
+    const btnRegistro = document.querySelector(".btn-full");
+    const textoOriginal = btnRegistro.innerText;
+
+    btnRegistro.innerText = "Procesando...";
+    btnRegistro.disabled = true;
 
     try {
         const respuesta = await fetch(`${API_BASE}/registro`, {
@@ -152,19 +165,25 @@ async function registrarUsuario() {
 
         const datos = await respuesta.json();
 
+        btnRegistro.innerText = textoOriginal;
+        btnRegistro.disabled = false;
+
         if (!datos.ok) {
             mostrarMensaje(datos.mensaje || "No se pudo registrar el usuario");
             return;
         }
 
         correoPendiente = correo;
-        codigoPendiente = datos.codigo_verificacion;
 
-        mostrarMensaje("Código de verificación generado correctamente", "ok");
-        abrirModalVerificacion(codigoPendiente);
+        mostrarMensaje("Código enviado. Revisa tu bandeja de entrada.", "ok");
+        abrirModalVerificacion();
 
     } catch (error) {
         console.log(error);
+
+        btnRegistro.innerText = textoOriginal;
+        btnRegistro.disabled = false;
+
         mostrarMensaje("No se pudo conectar con el servidor");
     }
 }
@@ -196,11 +215,11 @@ async function verificarCodigoRegistro() {
             return;
         }
 
-        mostrarMensajeVerificacion("Registro exitoso. Tu cuenta fue verificada.", "ok");
+        mostrarMensajeVerificacion("Registro exitoso. Redirigiendo...", "ok");
 
         setTimeout(() => {
             cerrarModalVerificacion();
-            window.location.href = "login.html";
+            window.location.replace("login.html");
         }, 1200);
 
     } catch (error) {
@@ -210,6 +229,14 @@ async function verificarCodigoRegistro() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    const inputNombre = document.getElementById("nombre");
+
+    if (inputNombre) {
+        inputNombre.addEventListener("input", function () {
+            this.value = this.value.replace(/[^A-Za-záéíóúÁÉÍÓÚñÑ\s]/g, "");
+        });
+    }
+
     const passwordInput = document.getElementById("password");
 
     if (passwordInput) {
