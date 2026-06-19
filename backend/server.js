@@ -1147,7 +1147,29 @@ app.put("/suscripcion/cancelar/:id", (req, res) => {
         }
     );
 });
+/* =========================================
+   SISTEMA DE RECOMENDACIONES LOCALES (MULTI-GÉNERO)
+========================================= */
+app.get("/api/recomendaciones/:genero/:id_actual", (req, res) => {
+    const { genero, id_actual } = req.params;
 
+    // 1. Separamos los géneros por comas, quitamos espacios extra y los unimos con un "OR" lógico (|)
+    const generosArray = genero.split(',').map(g => g.trim());
+    const regexPattern = generosArray.join('|');
+
+    // 2. Usamos REGEXP en MariaDB/MySQL para buscar CUALQUIERA de esas palabras
+    conexion.query(
+        "SELECT * FROM contenido WHERE genero REGEXP ? AND id != ? LIMIT 6",
+        [regexPattern, id_actual],
+        (error, resultados) => {
+            if (error) {
+                console.log("Error buscando recomendaciones:", error);
+                return res.json([]);
+            }
+            res.json(resultados);
+        }
+    );
+});
 /* =========================
    SERVIDOR
 ========================= */
