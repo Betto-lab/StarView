@@ -24,8 +24,8 @@ const registrosPendientes = new Map();
 
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    port: 587,      // CAMBIO: De 465 a 587 (Puerto amigable para la nube)
+    secure: false,  // CAMBIO: De true a false (Porque 587 usa STARTTLS, no SSL directo)
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
