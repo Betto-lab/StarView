@@ -502,6 +502,7 @@ async function inicializarHome() {
     await cargarCatalogo();
     await cargarTMDB();
     await cargarRecomendacionesUsuario();
+    await cargarDatosTopbar();
 
     const buscar = document.getElementById("buscar");
 
@@ -542,5 +543,86 @@ async function cargarRecomendacionesUsuario() {
         fila.style.display = "none";
     }
 }
+// ==========================================
+// MENÚ DESPLEGABLE Y ADMINISTRACIÓN DE PERFIL
+// ==========================================
 
+async function cargarDatosTopbar() {
+    const usuario_id = localStorage.getItem("usuario_id") || sessionStorage.getItem("usuario_id");
+    const perfil_id = localStorage.getItem("perfil_id") || sessionStorage.getItem("perfil_id");
+    
+    try {
+        const res = await fetch(`${API_BASE}/perfiles/${usuario_id}`);
+        const perfiles = await res.json();
+        const actual = perfiles.find(p => String(p.id) === String(perfil_id));
+        
+        if (actual) {
+            document.getElementById("navAvatar").src = normalizarImagen(actual.avatar || "Red.jpg");
+            document.getElementById("navNombrePerfil").innerText = actual.nombre;
+            window.perfilActualData = actual; // Lo guardamos en memoria para editarlo
+        }
+    } catch (e) {}
+}
+
+function abrirEdicionPerfilActual() {
+    if (!window.perfilActualData) return;
+    document.getElementById("editNombrePerfil").value = window.perfilActualData.nombre;
+    
+    const av = window.perfilActualData.avatar;
+    document.getElementById("editAvatarPerfil").value = av.includes('.') ? av : av + '.jpg';
+    document.getElementById("editInfantilPerfil").checked = (Number(window.perfilActualData.infantil) === 1);
+    
+    document.getElementById("modalEditarPerfil").classList.add("show");
+}
+
+async function guardarEdicionPerfilActual() {
+    const perfil_id = localStorage.getItem("perfil_id") || sessionStorage.getItem("perfil_id");
+    const nombre = document.getElementById("editNombrePerfil").value.trim();
+    const avatar = document.getElementById("editAvatarPerfil").value;
+    const infantil = document.getElementById("editInfantilPerfil").checked;
+
+    if (!nombre) return mostrarToast("El nombre no puede estar vacío", "error");
+
+    try {
+        const res = await fetch(`${API_BASE}/perfiles/${perfil_id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nombre, avatar, infantil })
+        });
+        const datos = await res.json();
+        
+        if (datos.ok) {
+            if (localStorage.getItem("perfil_nombre")) {
+                localStorage.setItem("perfil_nombre", nombre);
+                localStorage.setItem("perfil_infantil", infantil ? "1" : "0");
+            } else {
+                sessionStorage.setItem("perfil_nombre", nombre);
+                sessionStorage.setItem("perfil_infantil", infantil ? "1" : "0");
+            }
+            window.location.reload(); 
+        } else {
+            mostrarToast(datos.mensaje, "error");
+        }
+    } catch(e) { mostrarToast("Error de conexión", "error"); }
+}
+
+async function eliminarPerfilActual() {
+    if(!confirm("¿Estás 100% seguro de eliminar ESTE perfil?\nPerderás tu Historial y Mi Lista para siempre.")) return;
+    
+    const perfil_id = localStorage.getItem("perfil_id") || sessionStorage.getItem("perfil_id");
+    try {
+        const res = await fetch(`${API_BASE}/perfiles/${perfil_id}`, { method: "DELETE" });
+        const datos = await res.json();
+        
+        if (datos.ok) {
+            localStorage.removeItem("perfil_id");
+            localStorage.removeItem("perfil_nombre");
+            sessionStorage.removeItem("perfil_id");
+            sessionStorage.removeItem("perfil_nombre");
+            window.location.href = "seleccionar-perfil.html";
+        } else {
+            mostrarToast(datos.mensaje, "error");
+        }
+    } catch(e) { mostrarToast("Error al eliminar", "error"); }
+}
 inicializarHome();

@@ -2137,3 +2137,98 @@ textarea:focus{
     font-size: 12px;
     font-weight: 800;
 }
+/* ===============================
+   MENÚ DESPLEGABLE TIPO NETFLIX
+================================ */
+.nav-perfil {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    margin-left: 15px;
+}
+.nav-perfil-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.nav-perfil-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+.nav-perfil-arrow {
+    font-size: 10px;
+    transition: transform 0.3s ease;
+    color: #fff;
+}
+.nav-perfil:hover .nav-perfil-arrow {
+    transform: rotate(180deg);
+}
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    min-width: 220px;
+    border-radius: 8px;
+    padding: 10px 0;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    margin-top: 15px;
+    z-index: 100;
+}
+.nav-perfil:hover .dropdown-menu {
+    display: flex;
+}
+.dropdown-menu a, .dropdown-menu button {
+    color: #d1d5db;
+    padding: 12px 20px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s, color 0.2s;
+}
+.dropdown-menu a:hover, .dropdown-menu button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+.dropdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 5px 0;
+}
+
+/* ===============================
+   CÍRCULO "+" PARA AGREGAR PERFIL
+================================ */
+.btn-add-circle {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    border: 2px dashed rgba(255,255,255,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    transition: 0.3s ease;
+    margin: 0 auto 16px;
+}
+.btn-add-circle:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border-color: #fff;
+}

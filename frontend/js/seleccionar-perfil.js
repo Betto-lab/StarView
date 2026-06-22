@@ -129,64 +129,49 @@ function seleccionarAvatarPerfil(avatar, boton) {
 
 async function cargarPerfiles() {
     const usuario_id = obtenerUsuarioId();
-
     if (!usuario_id) return;
+    
     const contenedor = document.getElementById("perfilesContainer");
-
     if (!contenedor) return;
 
     try {
         const respuesta = await fetch(`${API_BASE}/perfiles/${usuario_id}`);
         const perfiles = await respuesta.json();
 
-        if (!perfiles || perfiles.length === 0) {
-            contenedor.innerHTML = `
-                <div class="empty-state">
-                    Aún no tienes perfiles.
-                    Crea uno para ingresar al catálogo.
-                </div>
-            `;
-            return;
+        contenedor.innerHTML = "";
+
+        // 1. DIBUJAR LOS PERFILES EXISTENTES
+        if (perfiles && perfiles.length > 0) {
+            perfiles.forEach(perfil => {
+                const card = document.createElement("article");
+                card.className = "perfil-card";
+                card.innerHTML = `
+                    <div class="perfil-avatar" style="overflow: hidden; background: transparent; cursor: pointer;" onclick='abrirModalClavePerfil({"id": ${perfil.id}, "nombre": "${perfil.nombre}", "infantil": ${perfil.infantil}})'>
+                        <img src="${obtenerRutaAvatar(perfil.avatar)}" alt="${perfil.nombre}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px;">
+                    </div>
+                    <h3 style="cursor: pointer;" onclick='abrirModalClavePerfil({"id": ${perfil.id}, "nombre": "${perfil.nombre}", "infantil": ${perfil.infantil}})'>${perfil.nombre} 🔒</h3>
+                    ${Number(perfil.infantil) === 1 ? `<span class="badge-kids" style="background:#e50914;color:#fff;padding:2px 5px;border-radius:4px;font-size:12px;margin-top:5px;display:inline-block;">Infantil</span>` : ""}
+                `;
+                contenedor.appendChild(card);
+            });
         }
 
-        contenedor.innerHTML = "";
-        perfiles.forEach(perfil => {
-            const card = document.createElement("article");
-            card.className = "perfil-card";
-
-            card.innerHTML = `
-                <div class="perfil-avatar" style="overflow: hidden; background: transparent; cursor: pointer;" onclick='abrirModalClavePerfil({"id": ${perfil.id}, "nombre": "${perfil.nombre}", "infantil": ${perfil.infantil}})'>
-                    <img 
-                        src="${obtenerRutaAvatar(perfil.avatar)}" 
-                        alt="${perfil.nombre}" 
-                        style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px;"
-                    >
-                </div>
-
-                <h3 style="cursor: pointer;" onclick='abrirModalClavePerfil({"id": ${perfil.id}, "nombre": "${perfil.nombre}", "infantil": ${perfil.infantil}})'>${perfil.nombre} 🔒</h3>
-
-                ${
-                    Number(perfil.infantil) === 1
-                        ? `<span class="badge-kids" style="background:#e50914;color:#fff;padding:2px 5px;border-radius:4px;font-size:12px;margin-top:5px;margin-bottom:10px;display:inline-block;">Infantil</span>`
-                        : ""
-                }
-
-                <div style="display: flex; justify-content: center; gap: 10px; margin-top: 10px;">
-                    <button class="btn btn-secondary" style="padding: 5px 12px; font-size: 13px;" onclick="prepararEdicion(${perfil.id}, '${perfil.nombre}', '${perfil.avatar}', ${perfil.infantil})">✏️ Editar</button>
-                    <button class="btn btn-primary" style="padding: 5px 12px; font-size: 13px; background: #e50914; border: none;" title="Eliminar perfil" onclick="eliminarPerfil(${perfil.id}, '${perfil.nombre}')">🗑️</button>
-                </div>
+        // 2. DIBUJAR EL CÍRCULO "+" (Solo si hay menos de 5 perfiles)
+        if (!perfiles || perfiles.length < 5) {
+            const addCard = document.createElement("article");
+            addCard.className = "perfil-card";
+            addCard.style.background = "transparent";
+            addCard.style.boxShadow = "none";
+            addCard.style.border = "none";
+            addCard.innerHTML = `
+                <div class="btn-add-circle" onclick="mostrarFormularioPerfil()">+</div>
+                <h3 style="cursor: pointer; color: #a8b3cf;" onclick="mostrarFormularioPerfil()">Agregar perfil</h3>
             `;
-
-            contenedor.appendChild(card);
-        });
+            contenedor.appendChild(addCard);
+        }
 
     } catch (error) {
-        console.log("Error al cargar perfiles:", error);
-        contenedor.innerHTML = `
-            <div class="empty-state">
-                No se pudieron cargar los perfiles.
-            </div>
-        `;
+        contenedor.innerHTML = `<div class="empty-state">No se pudieron cargar los perfiles.</div>`;
     }
 }
 /* =========================
@@ -499,104 +484,7 @@ async function restablecerPasswordPerfil() {
         mostrarMensajeRecuperar("No se pudo conectar con el servidor");
     }
 }
-// ==========================================
-// HU03: EDITAR Y ELIMINAR PERFILES
-// ==========================================
-let perfilEnEdicion = null;
 
-function prepararEdicion(id, nombre, avatar, infantil) {
-    perfilEnEdicion = id;
-    document.getElementById("nombrePerfil").value = nombre;
-    document.getElementById("avatarPerfil").value = avatar;
-    document.getElementById("infantilPerfil").checked = (infantil === 1 || infantil === true);
-    
-    // Ocultar los campos de PIN (la contraseña no se cambia al editar nombre)
-    document.getElementById("passwordPerfil").style.display = "none";
-    document.getElementById("confirmarPasswordPerfil").style.display = "none";
-    document.querySelector("label[for='passwordPerfil']").style.display = "none";
-    document.querySelector("label[for='confirmarPasswordPerfil']").style.display = "none";
-
-    // Cambiar la función del botón "Guardar"
-    const btnGuardar = document.querySelector("#formPerfil .btn-primary");
-    btnGuardar.innerText = "Guardar Cambios";
-    btnGuardar.onclick = guardarEdicionPerfil; 
-
-    mostrarFormularioPerfil(); // Abre el panel flotante
-}
-
-async function guardarEdicionPerfil() {
-    const nombre = document.getElementById("nombrePerfil").value.trim();
-    const avatar = document.getElementById("avatarPerfil").value;
-    const infantil = document.getElementById("infantilPerfil").checked;
-
-    if (!nombre) return mostrarMensajePerfil("El nombre es obligatorio");
-
-    try {
-        const respuesta = await fetch(`${API_BASE}/perfiles/${perfilEnEdicion}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nombre, avatar, infantil })
-        });
-        const datos = await respuesta.json();
-
-        if (datos.ok) {
-            mostrarMensajePerfil("Perfil actualizado", "ok");
-            mostrarFormularioPerfil(); // Cierra el panel
-            cargarPerfiles();
-            
-            // Volver el formulario a la normalidad en 1 segundo
-            setTimeout(restaurarFormularioPerfil, 1000); 
-        } else {
-            mostrarMensajePerfil(datos.mensaje);
-        }
-    } catch (error) {
-        mostrarMensajePerfil("Error de conexión al editar");
-    }
-}
-
-function restaurarFormularioPerfil() {
-    perfilEnEdicion = null;
-    document.getElementById("nombrePerfil").value = "";
-    document.getElementById("passwordPerfil").value = "";
-    document.getElementById("confirmarPasswordPerfil").value = "";
-    document.getElementById("infantilPerfil").checked = false;
-
-    // Mostrar de nuevo los campos de contraseña para cuando se quiera crear uno nuevo
-    document.getElementById("passwordPerfil").style.display = "block";
-    document.getElementById("confirmarPasswordPerfil").style.display = "block";
-    document.querySelector("label[for='passwordPerfil']").style.display = "block";
-    document.querySelector("label[for='confirmarPasswordPerfil']").style.display = "block";
-
-    const btnGuardar = document.querySelector("#formPerfil .btn-primary");
-    btnGuardar.innerText = "Guardar perfil";
-    btnGuardar.onclick = crearPerfil;
-}
-
-// Para asegurar que al darle a "+ Agregar perfil" el formulario esté limpio
-document.addEventListener("DOMContentLoaded", () => {
-    const btnAdd = document.querySelector(".btn-add-profile");
-    if(btnAdd) {
-        btnAdd.addEventListener("click", restaurarFormularioPerfil);
-    }
-});
-
-async function eliminarPerfil(id, nombre) {
-    // Alerta de seguridad nativa del navegador
-    if (!confirm(`¿Estás completamente seguro de eliminar el perfil "${nombre}"?\nSe borrará todo su historial y "Mi Lista". Esta acción no se puede deshacer.`)) return;
-
-    try {
-        const respuesta = await fetch(`${API_BASE}/perfiles/${id}`, { method: "DELETE" });
-        const datos = await respuesta.json();
-        
-        if (datos.ok) {
-            cargarPerfiles();
-        } else {
-            alert(datos.mensaje);
-        }
-    } catch (error) {
-        alert("Error al intentar eliminar el perfil");
-    }
-}
 /* =========================
    EVENTOS
 ========================= */
