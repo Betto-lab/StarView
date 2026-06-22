@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facturación | StarView</title>
+    <title>StarView</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="app-body">
@@ -30,7 +30,7 @@
                 <a href="facturacion.html">📄 Facturación</a>
                 <a href="suscripcion.html">⭐ Suscripción</a>
                 <div class="dropdown-divider"></div>
-                <button onclick="cerrarSesion()">🚪 Cerrar sesión</button>
+                <button onclick="cerrarSesionNav()">🚪 Cerrar sesión</button>
                 <button onclick="eliminarPerfilActual()" style="color: #ffb4b8; margin-top: 5px;">🗑️ Eliminar perfil</button>
             </div>
         </div>
@@ -89,9 +89,9 @@
 </div>
 
 <script>
-    const API_BASE = window.location.origin;
+    const NAV_API_BASE = window.location.origin;
 
-    function cerrarSesion() {
+    function cerrarSesionNav() {
         localStorage.clear();
         sessionStorage.clear();
         window.location.href = "index.html";
@@ -104,7 +104,7 @@
         if (!usuario_id || !perfil_id) return;
 
         try {
-            const res = await fetch(`${API_BASE}/perfiles/${usuario_id}`);
+            const res = await fetch(`${NAV_API_BASE}/perfiles/${usuario_id}`);
             const perfiles = await res.json();
             const actual = perfiles.find(p => String(p.id) === String(perfil_id));
             
@@ -112,21 +112,23 @@
                 const img = actual.avatar.includes('.') ? actual.avatar : actual.avatar + '.jpg';
                 document.getElementById("navAvatar").src = `img/${img}`;
                 document.getElementById("navNombrePerfil").innerText = actual.nombre;
-                window.perfilActualData = actual; 
+                window.perfilNavData = actual; 
             }
         } catch (e) {
-            console.log("Error al cargar topbar:", e);
+            console.error("Error al cargar menú superior:", e);
         }
     }
 
     function abrirEdicionPerfilActual() {
-        if (!window.perfilActualData) return;
+        if (!window.perfilNavData) {
+            alert("Los datos del perfil están cargando, por favor intenta de nuevo en un segundo.");
+            return;
+        }
         
-        document.getElementById("editNombrePerfil").value = window.perfilActualData.nombre;
-        
-        const av = window.perfilActualData.avatar;
+        document.getElementById("editNombrePerfil").value = window.perfilNavData.nombre;
+        const av = window.perfilNavData.avatar;
         document.getElementById("editAvatarPerfil").value = av.includes('.') ? av : av + '.jpg';
-        document.getElementById("editInfantilPerfil").checked = (Number(window.perfilActualData.infantil) === 1);
+        document.getElementById("editInfantilPerfil").checked = (Number(window.perfilNavData.infantil) === 1);
         
         document.getElementById("modalEditarPerfil").classList.add("show");
     }
@@ -140,7 +142,7 @@
         if (!nombre) return alert("El nombre es obligatorio");
 
         try {
-            const res = await fetch(`${API_BASE}/perfiles/${perfil_id}`, {
+            const res = await fetch(`${NAV_API_BASE}/perfiles/${perfil_id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ nombre, avatar, infantil })
@@ -167,7 +169,7 @@
         
         const perfil_id = localStorage.getItem("perfil_id") || sessionStorage.getItem("perfil_id");
         try {
-            const res = await fetch(`${API_BASE}/perfiles/${perfil_id}`, { method: "DELETE" });
+            const res = await fetch(`${NAV_API_BASE}/perfiles/${perfil_id}`, { method: "DELETE" });
             const datos = await res.json();
             
             if (datos.ok) {
@@ -182,6 +184,7 @@
         } catch(e) { alert("Error al eliminar"); }
     }
 
+    // Inicializar funciones de la barra
     document.addEventListener("DOMContentLoaded", () => {
         cargarDatosTopbar();
     });
