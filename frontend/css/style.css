@@ -2404,3 +2404,44 @@ textarea:focus{
         margin-left: 0 !important;
     }
 }
+/* ==========================================
+   BUSCADOR ESTILO NETFLIX (TOPBAR)
+========================================== */
+.search-container {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+    margin-right: 15px;
+}
+.search-container.active {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+.btn-search-icon {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 5px;
+}
+.search-input-top {
+    width: 0;
+    border: none;
+    background: transparent;
+    color: white;
+    transition: width 0.3s ease, padding 0.3s ease;
+    padding: 0;
+    outline: none;
+    font-size: 14px;
+}
+.search-container.active .search-input-top {
+    width: 200px;
+    padding: 5px 10px;
+}
+
+@media (max-width: 600px) {
+    .search-container.active .search-input-top { width: 130px; }
+}

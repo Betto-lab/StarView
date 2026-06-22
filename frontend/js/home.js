@@ -1,5 +1,7 @@
 const API_BASE = window.location.origin;
 
+// 1. CREAMOS LA VARIABLE GLOBAL (Bien arriba como indicaste)
+window.catalogoGlobal = [];
 let catalogo = [];
 
 function esPerfilInfantilActivo() {
@@ -203,40 +205,58 @@ function mostrarAvisoPerfilInfantil() {
     main.prepend(aviso);
 }
 
+// 2. ACTUALIZA TU FUNCIÓN DE CARGAR CATÁLOGO
 async function cargarCatalogo() {
-    const perfil_id = obtenerPerfilId();
+    try {
+        const respuesta = await fetch(`${API_BASE}/contenido`);
+        const lista = await respuesta.json();
+
+        // 🟢 ESTE ES EL AJUSTE FINAL CLAVE 🟢
+        window.catalogoGlobal = lista;
+        catalogo = lista; // Por si alguna función vieja lo usa
+
+        const contenedor = document.getElementById("catalogo");
+        if (!contenedor) return;
+        contenedor.innerHTML = "";
+
+        if (!lista || lista.length === 0) {
+            contenedor.innerHTML = `<div class="empty-state">No hay contenido disponible.</div>`;
+            return;
+        }
+
+        // Usamos tu función cardContenido
+        contenedor.innerHTML = lista.map(item => cardContenido(item)).join(""); 
+    } catch (error) {
+        console.log("Error al cargar el catálogo:", error);
+    }
+}
+
+// 3. LA FUNCIÓN DEL BUSCADOR INTELIGENTE EN TIEMPO REAL
+function buscadorInteligente() {
+    // Tomamos lo que escribes en el input top o en el normal
+    const inputElement = document.getElementById("searchInputTop") || document.getElementById("buscar");
+    if (!inputElement) return;
+    
+    const query = inputElement.value.toLowerCase().trim();
     const contenedor = document.getElementById("catalogo");
 
-    if (!perfil_id) {
-        window.location.href = "seleccionar-perfil.html";
+    if (!window.catalogoGlobal || !contenedor) return;
+
+    const filtrados = window.catalogoGlobal.filter(item => 
+        (item.titulo && item.titulo.toLowerCase().includes(query)) || 
+        (item.genero && item.genero.toLowerCase().includes(query)) ||
+        (item.tipo && item.tipo.toLowerCase().includes(query))
+    );
+
+    contenedor.innerHTML = "";
+
+    if (filtrados.length === 0) {
+        contenedor.innerHTML = `<div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 40px;">No se encontraron resultados para "${query}"</div>`;
         return;
     }
 
-    try {
-        const respuesta = await fetch(`${API_BASE}/contenido/perfil/${perfil_id}`);
-        catalogo = await respuesta.json();
-
-        if (esPerfilInfantilActivo()) {
-            mostrarAvisoPerfilInfantil();
-
-            catalogo = catalogo.filter(item => {
-                return Number(item.infantil) === 1;
-            });
-        }
-
-        mostrarCatalogo(catalogo);
-
-    } catch (error) {
-        console.log("Error al cargar catálogo:", error);
-
-        if (contenedor) {
-            contenedor.innerHTML = `
-                <div class="empty-state">
-                    No se pudo cargar el catálogo local.
-                </div>
-            `;
-        }
-    }
+    // Dibujamos usando tu función principal
+    contenedor.innerHTML = filtrados.map(item => cardContenido(item)).join("");
 }
 
 function mostrarCatalogo(lista) {
@@ -296,7 +316,6 @@ async function agregarMiLista(contenido_id) {
 
         const datos = await respuesta.json();
 
-        // NUEVO: Cambio visual del botón al agregar
         if (datos.ok) {
             const btn = document.getElementById(`btn-lista-${contenido_id}`);
             if (btn) {
@@ -476,45 +495,10 @@ async function agregarMiListaTMDB(tmdb_id) {
     await agregarMiLista(contenido.id);
 }
 
-async function inicializarHome() {
-    const accesoPermitido = await verificarAccesoCatalogo();
-
-    if (!accesoPermitido) {
-        return;
-    }
-
-    if (!protegerPerfil()) {
-        return;
-    }
-
-    const nombrePerfil = localStorage.getItem("perfil_nombre") || "StarView";
-    const perfilActual = document.getElementById("perfilActual");
-
-    if (perfilActual) {
-        perfilActual.innerText = `Perfil actual: ${nombrePerfil}`;
-    }
-
-    if (esPerfilInfantilActivo()) {
-        mostrarAvisoPerfilInfantil();
-    }
-
-    await cargarContinuarViendo();
-    await cargarCatalogo();
-    await cargarTMDB();
-    await cargarRecomendacionesUsuario();
-    await cargarDatosTopbar();
-
-    const buscar = document.getElementById("buscar");
-
-    if (buscar) {
-        buscar.addEventListener("input", buscarContenido);
-    }
-}
 // ==========================================
 // HU15: RECOMENDACIONES PERSONALIZADAS
 // ==========================================
 async function cargarRecomendacionesUsuario() {
-    // Busca en ambos storages por lo del Checkbox
     const perfil_id = localStorage.getItem("perfil_id") || sessionStorage.getItem("perfil_id");
     
     const contenedor = document.getElementById("contenedorRecomendados");
@@ -527,22 +511,20 @@ async function cargarRecomendacionesUsuario() {
         const respuesta = await fetch(`${API_BASE}/recomendaciones/historial/${perfil_id}`);
         const datos = await respuesta.json();
 
-        // Si no hay historial suficiente o dio error, ocultamos la fila
         if (!datos.ok || !datos.recomendaciones || datos.recomendaciones.length === 0) {
             fila.style.display = "none";
             return;
         }
 
-        // Si hay recomendaciones, mostramos la fila y cambiamos el título
         fila.style.display = "block";
-        titulo.innerText = `Porque viste ${datos.genero}`; 
+        if (titulo) titulo.innerText = `Porque viste ${datos.genero}`; 
         
-        // Renderizamos las tarjetas usando tu función cardContenido
         contenedor.innerHTML = datos.recomendaciones.map(item => cardContenido(item)).join("");
     } catch (error) {
         fila.style.display = "none";
     }
 }
+
 // ==========================================
 // MENÚ DESPLEGABLE Y ADMINISTRACIÓN DE PERFIL
 // ==========================================
@@ -559,7 +541,7 @@ async function cargarDatosTopbar() {
         if (actual) {
             document.getElementById("navAvatar").src = normalizarImagen(actual.avatar || "Red.jpg");
             document.getElementById("navNombrePerfil").innerText = actual.nombre;
-            window.perfilActualData = actual; // Lo guardamos en memoria para editarlo
+            window.perfilActualData = actual; 
         }
     } catch (e) {}
 }
@@ -625,4 +607,95 @@ async function eliminarPerfilActual() {
         }
     } catch(e) { mostrarToast("Error al eliminar", "error"); }
 }
+
+// ==========================================
+// 1. ANIMACIÓN DEL BUSCADOR
+// ==========================================
+function toggleSearch() {
+    const box = document.getElementById("searchBox");
+    const input = document.getElementById("searchInputTop");
+    if(!box || !input) return;
+    
+    box.classList.toggle("active");
+    if(box.classList.contains("active")) {
+        input.focus();
+    } else {
+        input.value = ""; 
+        buscadorInteligente(); 
+    }
+}
+
+// ==========================================
+// 3. RECOMENDACIONES TIPO NETFLIX (Renombrada para no pisar la anterior)
+// ==========================================
+async function cargarRecomendacionesAlternativas() {
+    const perfil_id = localStorage.getItem("perfil_id") || sessionStorage.getItem("perfil_id");
+    if (!perfil_id) return;
+
+    try {
+        const res = await fetch(`${window.location.origin}/recomendaciones/${perfil_id}`);
+        const data = await res.json();
+
+        if (data && data.length > 0) {
+            const row = document.getElementById("rowRecomendados");
+            const contenedor = document.getElementById("contenedorRecomendados");
+            if (row && contenedor) {
+                row.style.display = "block";
+                // Usamos la lógica original que tenías aquí
+                contenedor.innerHTML = data.map(item => `
+                    <article class="card">
+                        <img src="img/${item.imagen.includes('.') ? item.imagen : item.imagen+'.jpg'}" class="poster" onclick="window.location.href='reproductor.html?id=${item.id}'">
+                        <div class="card-info">
+                            <h3>${item.titulo}</h3>
+                            <p>Porque viste algo similar</p>
+                            <div class="card-actions">
+                                <button onclick="window.location.href='reproductor.html?id=${item.id}'">▶ Ver</button>
+                            </div>
+                        </div>
+                    </article>
+                `).join("");
+            }
+        }
+    } catch(e) {
+        console.log("No hay historial suficiente para recomendar aún.");
+    }
+}
+
+// ==========================================
+// INICIALIZACIÓN MÁSTER
+// ==========================================
+async function inicializarHome() {
+    const accesoPermitido = await verificarAccesoCatalogo();
+    if (!accesoPermitido) return;
+
+    if (!protegerPerfil()) return;
+
+    const nombrePerfil = localStorage.getItem("perfil_nombre") || sessionStorage.getItem("perfil_nombre") || "StarView";
+    const perfilActual = document.getElementById("perfilActual");
+
+    if (perfilActual) {
+        perfilActual.innerText = `Perfil actual: ${nombrePerfil}`;
+    }
+
+    if (esPerfilInfantilActivo()) {
+        mostrarAvisoPerfilInfantil();
+    }
+
+    await cargarContinuarViendo();
+    await cargarCatalogo();
+    await cargarTMDB();
+    await cargarRecomendacionesUsuario();
+    await cargarDatosTopbar();
+
+    const buscar = document.getElementById("buscar");
+    const buscarTop = document.getElementById("searchInputTop");
+
+    if (buscar) {
+        buscar.addEventListener("input", buscarContenido);
+    }
+    if (buscarTop) {
+        buscarTop.addEventListener("input", buscadorInteligente);
+    }
+}
+
 inicializarHome();

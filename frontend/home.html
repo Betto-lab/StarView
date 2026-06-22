@@ -15,6 +15,11 @@
         <a href="home.html" class="activo">Inicio</a>
         <a href="mi-lista.html">Mi Lista</a>
 
+        <div class="busqueda">
+        <input type="text" id="buscar" placeholder="Buscar película " onkeyup="buscadorInteligente()">
+        <button class="btn btn-small" onclick="buscadorInteligente()">Buscar</button>
+        </div>
+
         <div class="nav-perfil">
             <div class="nav-perfil-trigger">
                 <img src="img/Red.jpg" id="navAvatar" class="nav-perfil-avatar" alt="Perfil">
@@ -83,11 +88,6 @@
             <div>
                 <p class="eyebrow">Biblioteca StarView</p>
                 <h2>Catálogo de películas y series</h2>
-            </div>
-
-            <div class="busqueda">
-                <input type="text" id="buscar" placeholder="Buscar película o serie...">
-                <button class="btn btn-small" onclick="buscarContenido()">Buscar</button>
             </div>
         </div>
 
