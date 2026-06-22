@@ -18,15 +18,22 @@
     box-sizing:border-box;
 }
 
-html{
-    scroll-behavior:smooth;
+html {
+    scroll-behavior: smooth;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
 }
 
-body{
-    margin:0;
-    font-family:Inter, Arial, Helvetica, sans-serif;
-    background:var(--bg);
-    color:var(--text);
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    font-family: Inter, Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--text);
 }
 
 a{
@@ -2444,4 +2451,93 @@ textarea:focus{
 
 @media (max-width: 600px) {
     .search-container.active .search-input-top { width: 130px; }
+}
+
+/* =========================================
+   BUSCADOR FLOTANTE (DROPDOWN ESTILO NETFLIX)
+========================================= */
+
+/* 1. Aseguramos que el contenedor padre sirva de ancla */
+.search-container, .busqueda {
+    position: relative;
+}
+
+/* 2. La caja mágica flotante */
+.search-dropdown {
+    position: absolute;
+    top: 120%; /* Aparece justo debajo de la barra */
+    right: 0;
+    width: 100%;
+    min-width: 280px;
+    max-height: 400px;
+    overflow-y: auto;
+    
+    /* Usamos tus colores exactos de style.css */
+    background: var(--bg-card); 
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 8px;
+}
+
+.search-dropdown.oculto {
+    display: none !important;
+}
+
+/* 3. Diseño de cada película en la lista */
+.search-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-radius: 8px;
+    transition: .25s ease;
+    text-decoration: none;
+}
+
+.search-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(4px); /* Pequeño salto a la derecha al pasar el mouse */
+}
+
+.search-item img {
+    width: 40px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    background: #111827;
+}
+
+.search-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.search-item-info h4 {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 800;
+}
+
+.search-item-info span {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* 4. ADAPTACIÓN PERFECTA PARA CELULARES */
+@media (max-width: 600px) {
+    .search-dropdown {
+        position: fixed; /* Lo despegamos de la barra */
+        top: 70px; /* Aparece debajo del header completo */
+        left: 5%;
+        width: 90%;
+        max-height: 65vh;
+        box-shadow: 0 30px 100px rgba(0,0,0,0.9);
+    }
 }

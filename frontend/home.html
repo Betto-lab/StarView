@@ -15,9 +15,11 @@
         <a href="home.html" class="activo">Inicio</a>
         <a href="mi-lista.html">Mi Lista</a>
 
-        <div class="busqueda">
-        <input type="text" id="buscar" placeholder="Buscar película " onkeyup="buscadorInteligente()">
-        <button class="btn btn-small" onclick="buscadorInteligente()">Buscar</button>
+        <div class="search-container"> 
+            <input type="text" id="searchInputTop" class="search-input-top" placeholder="Buscar...">
+        <button class="btn-search-icon">🔍</button>
+    
+        <div id="searchDropdown" class="search-dropdown oculto"></div>
         </div>
 
         <div class="nav-perfil">

@@ -231,33 +231,68 @@ async function cargarCatalogo() {
     }
 }
 
-// 3. LA FUNCIÓN DEL BUSCADOR INTELIGENTE EN TIEMPO REAL
+// 3. LA FUNCIÓN DEL BUSCADOR INTELIGENTE EN TIEMPO REAL (VERSIÓN DESPLEGABLE)
 function buscadorInteligente() {
-    // Tomamos lo que escribes en el input top o en el normal
     const inputElement = document.getElementById("searchInputTop") || document.getElementById("buscar");
-    if (!inputElement) return;
+    const searchDropdown = document.getElementById("searchDropdown");
+    
+    if (!inputElement || !searchDropdown) return;
     
     const query = inputElement.value.toLowerCase().trim();
-    const contenedor = document.getElementById("catalogo");
 
-    if (!window.catalogoGlobal || !contenedor) return;
+    // Ocultar cajón si no hay texto o es muy corto
+    if (query.length === 0) {
+        searchDropdown.classList.add("oculto");
+        return;
+    }
 
+    if (!window.catalogoGlobal) return;
+
+    // Filtramos el contenido global en memoria
     const filtrados = window.catalogoGlobal.filter(item => 
         (item.titulo && item.titulo.toLowerCase().includes(query)) || 
         (item.genero && item.genero.toLowerCase().includes(query)) ||
         (item.tipo && item.tipo.toLowerCase().includes(query))
     );
 
-    contenedor.innerHTML = "";
+    // Limpiamos el cajón flotante
+    searchDropdown.innerHTML = "";
 
     if (filtrados.length === 0) {
-        contenedor.innerHTML = `<div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 40px;">No se encontraron resultados para "${query}"</div>`;
-        return;
+        searchDropdown.innerHTML = `<p style="color: #a3a3a3; text-align: center; margin: 10px 0; font-size: 13px;">No se encontraron resultados.</p>`;
+    } else {
+        // Llenamos el cajón con los primeros 6 resultados
+        filtrados.slice(0, 6).forEach(item => {
+            const enlace = document.createElement("a");
+            enlace.className = "search-item";
+            enlace.href = `reproductor.html?id=${item.id}`;
+            
+            enlace.innerHTML = `
+                <img src="${normalizarImagen(item.imagen)}" alt="${escapeHTML(item.titulo)}">
+                <div class="search-item-info">
+                    <h4>${escapeHTML(item.titulo)}</h4>
+                    <span>${escapeHTML(item.genero || "Sin género")}</span>
+                </div>
+            `;
+            searchDropdown.appendChild(enlace);
+        });
     }
 
-    // Dibujamos usando tu función principal
-    contenedor.innerHTML = filtrados.map(item => cardContenido(item)).join("");
+    // Mostramos el cajón
+    searchDropdown.classList.remove("oculto");
 }
+
+// Ocultar el dropdown si el usuario hace clic en cualquier otra parte de la pantalla
+document.addEventListener("click", function(event) {
+    const inputElement = document.getElementById("searchInputTop") || document.getElementById("buscar");
+    const searchDropdown = document.getElementById("searchDropdown");
+    
+    if (inputElement && searchDropdown) {
+        if (!inputElement.contains(event.target) && !searchDropdown.contains(event.target)) {
+            searchDropdown.classList.add("oculto");
+        }
+    }
+});
 
 function mostrarCatalogo(lista) {
     const contenedor = document.getElementById("catalogo");
@@ -278,21 +313,7 @@ function mostrarCatalogo(lista) {
     contenedor.innerHTML = lista.map(item => cardContenido(item)).join("");
 }
 
-function buscarContenido() {
-    const buscar = document.getElementById("buscar");
 
-    if (!buscar) return;
-
-    const texto = buscar.value.toLowerCase().trim();
-
-    const resultados = catalogo.filter(item =>
-        String(item.titulo || "").toLowerCase().includes(texto) ||
-        String(item.genero || "").toLowerCase().includes(texto) ||
-        String(item.tipo || "").toLowerCase().includes(texto)
-    );
-
-    mostrarCatalogo(resultados);
-}
 
 async function agregarMiLista(contenido_id) {
     const perfil_id = obtenerPerfilId();
@@ -690,9 +711,6 @@ async function inicializarHome() {
     const buscar = document.getElementById("buscar");
     const buscarTop = document.getElementById("searchInputTop");
 
-    if (buscar) {
-        buscar.addEventListener("input", buscarContenido);
-    }
     if (buscarTop) {
         buscarTop.addEventListener("input", buscadorInteligente);
     }
