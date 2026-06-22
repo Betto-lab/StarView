@@ -501,11 +501,45 @@ async function inicializarHome() {
     await cargarContinuarViendo();
     await cargarCatalogo();
     await cargarTMDB();
+    await cargarRecomendacionesUsuario();
 
     const buscar = document.getElementById("buscar");
 
     if (buscar) {
         buscar.addEventListener("input", buscarContenido);
+    }
+}
+// ==========================================
+// HU15: RECOMENDACIONES PERSONALIZADAS
+// ==========================================
+async function cargarRecomendacionesUsuario() {
+    // Busca en ambos storages por lo del Checkbox
+    const perfil_id = localStorage.getItem("perfil_id") || sessionStorage.getItem("perfil_id");
+    
+    const contenedor = document.getElementById("contenedorRecomendados");
+    const fila = document.getElementById("rowRecomendados");
+    const titulo = document.getElementById("tituloRecomendados");
+
+    if (!contenedor || !fila) return;
+
+    try {
+        const respuesta = await fetch(`${API_BASE}/recomendaciones/historial/${perfil_id}`);
+        const datos = await respuesta.json();
+
+        // Si no hay historial suficiente o dio error, ocultamos la fila
+        if (!datos.ok || !datos.recomendaciones || datos.recomendaciones.length === 0) {
+            fila.style.display = "none";
+            return;
+        }
+
+        // Si hay recomendaciones, mostramos la fila y cambiamos el título
+        fila.style.display = "block";
+        titulo.innerText = `Porque viste ${datos.genero}`; 
+        
+        // Renderizamos las tarjetas usando tu función cardContenido
+        contenedor.innerHTML = datos.recomendaciones.map(item => cardContenido(item)).join("");
+    } catch (error) {
+        fila.style.display = "none";
     }
 }
 
