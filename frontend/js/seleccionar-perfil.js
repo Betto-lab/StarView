@@ -308,9 +308,29 @@ async function validarIngresoPerfil() {
 }
 
 async function validarIngresoBackend(perfil_id, pin, perfil_nombre) {
-    const usuario_id = obtenerUsuarioId();
+    try {
+        const respuesta = await fetch(`${API_BASE}/perfiles/verificar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                usuario_id: obtenerUsuarioId(),
+                perfil_id: perfil_id, 
+                password_perfil: pin 
+            })
+        });
 
-    // Éxito: Guardamos la sesión en el mismo lugar que el usuario
+        const datos = await respuesta.json();
+
+        if (!datos.ok) {
+            if (pin !== "") {
+                mostrarMensajeClave(datos.mensaje || "Contraseña incorrecta");
+            } else {
+                alert("Error al acceder al perfil");
+            }
+            return;
+        }
+
+        // Éxito: Guardamos la sesión en el mismo lugar que el usuario
         if (sessionStorage.getItem("usuario_id")) {
             sessionStorage.setItem("perfil_id", datos.perfil.id);
             sessionStorage.setItem("perfil_nombre", datos.perfil.nombre);
@@ -320,52 +340,19 @@ async function validarIngresoBackend(perfil_id, pin, perfil_nombre) {
             localStorage.setItem("perfil_nombre", datos.perfil.nombre);
             localStorage.setItem("perfil_infantil", datos.perfil.infantil || 0);
         }
-    if (!usuario_id) return;
-    
 
-    try {
-        const respuesta = await fetch(`${API_BASE}/perfiles/verificar`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                usuario_id,
-                perfil_id,
-                password_perfil: pin
-            })
-        });
-
-        const datos = await respuesta.json();
-
-        if (!datos.ok) {
-            mostrarMensajeClave(datos.mensaje || "Contraseña incorrecta");
-            return;
+        if (pin !== "") {
+            mostrarMensajeClave("Perfil verificado correctamente", "ok");
         }
 
-        const perfilValidado = datos.perfil || {};
-        const infantilServidor = perfilValidado.infantil;
-        const infantilLocal = perfilPendiente ? perfilPendiente.infantil : 0;
-
-        const esInfantil =
-            Number(infantilServidor) === 1 ||
-            Number(infantilLocal) === 1;
-
-        localStorage.setItem("perfil_id", perfilValidado.id || perfil_id);
-        localStorage.setItem("perfil_nombre", perfilValidado.nombre || perfil_nombre);
-
-        localStorage.setItem("perfil_infantil", esInfantil ? "1" : "0");
-        localStorage.setItem("control_parental", esInfantil ? "1" : "0");
-
-        mostrarMensajeClave("Perfil verificado correctamente", "ok");
-
+        // ¡AQUÍ ESTÁ LA LÍNEA DE REDIRECCIÓN QUE FALTABA!
         setTimeout(() => {
             window.location.href = "home.html";
-        }, 500);
+        }, pin !== "" ? 500 : 100);
 
     } catch (error) {
         console.log(error);
-        mostrarMensajeClave("No se pudo conectar con el servidor");
+        if (pin !== "") mostrarMensajeClave("No se pudo conectar con el servidor");
     }
 }
 
