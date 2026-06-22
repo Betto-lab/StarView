@@ -629,22 +629,47 @@ async function eliminarPerfilActual() {
     } catch(e) { mostrarToast("Error al eliminar", "error"); }
 }
 
-// ==========================================
-// 1. ANIMACIÓN DEL BUSCADOR
-// ==========================================
-function toggleSearch() {
-    const box = document.getElementById("searchBox");
-    const input = document.getElementById("searchInputTop");
-    if(!box || !input) return;
+/* =========================================
+   SISTEMA DE BÚSQUEDA EXCLUSIVO
+========================================= */
+
+// 1. Función para alternar entre Inicio y Buscador
+function activarModoBusqueda(activo) {
+    // Capturamos las secciones completas (incluyendo sus títulos h2)
+    const secContinuar = document.getElementById("continuarViendo")?.closest('.section-block');
+    const secTmdb = document.getElementById("tmdbCatalogo")?.closest('.section-block');
+    const secRecomendados = document.getElementById("rowRecomendados");
+    const heroBanner = document.querySelector(".banner-home");
     
-    box.classList.toggle("active");
-    if(box.classList.contains("active")) {
-        input.focus();
+    // Capturamos toda la sección de la Biblioteca
+    const secCatalogo = document.getElementById("catalogo")?.closest('.section-block');
+
+    if (activo) {
+        // MODO BÚSQUEDA: Ocultamos todo el inicio y el banner rojo
+        if (secContinuar) secContinuar.style.display = "none";
+        if (secTmdb) secTmdb.style.display = "none";
+        if (secRecomendados) secRecomendados.style.display = "none";
+        if (heroBanner) heroBanner.style.display = "none";
+        
+        // Mostramos la Biblioteca Starview
+        if (secCatalogo) {
+            secCatalogo.style.display = "block";
+            mostrarCatalogo(window.catalogoGlobal); // Resetea para mostrar todo antes de escribir
+        }
     } else {
-        input.value = ""; 
-        buscadorInteligente(); 
+        // MODO INICIO: Mostramos el banner y las recomendaciones
+        if (secContinuar) secContinuar.style.display = "block";
+        if (secTmdb) secTmdb.style.display = "block";
+        if (secRecomendados) secRecomendados.style.display = "block";
+        if (heroBanner) heroBanner.style.display = "flex";
+        
+        // Ocultamos la Biblioteca por completo
+        if (secCatalogo) secCatalogo.style.display = "none";
     }
 }
+
+
+
 
 // ==========================================
 // 3. RECOMENDACIONES TIPO NETFLIX (Renombrada para no pisar la anterior)
@@ -708,12 +733,20 @@ async function inicializarHome() {
     await cargarRecomendacionesUsuario();
     await cargarDatosTopbar();
 
-    const buscar = document.getElementById("buscar");
     const buscarTop = document.getElementById("searchInputTop");
+    const btnSearch = document.querySelector(".btn-search-icon");
 
     if (buscarTop) {
         buscarTop.addEventListener("input", buscadorInteligente);
     }
+    
+    // Conectamos el click de la lupa
+    if (btnSearch) {
+        btnSearch.addEventListener("click", toggleSearch);
+    }
+
+    // ¡ESTO ES CLAVE!: Oculta la Biblioteca StarView ni bien el usuario entra a la página
+    activarModoBusqueda(false);
 }
 
 inicializarHome();
