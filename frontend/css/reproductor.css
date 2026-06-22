@@ -976,3 +976,23 @@ input[type="range"]::-webkit-slider-thumb:hover {
         width: 50px !important;
     }
 }
+/* ==========================================
+   ARREGLO: CONTROLES TRANSPARENTES EN PANTALLA COMPLETA
+========================================== */
+#videoContenedor:fullscreen .controles-personalizados,
+#videoContenedor:-webkit-full-screen .controles-personalizados {
+    /* Quitamos el bloque oscuro y lo hacemos 100% transparente */
+    background: transparent !important; 
+    
+    /* Reducimos un poco el relleno (padding) para que la barra 
+       de progreso quede más cerca del borde inferior, como en Netflix */
+    padding: 20px 30px 15px !important; 
+}
+
+/* Ajuste específico para celulares en pantalla completa */
+@media (max-width: 600px) {
+    #videoContenedor:fullscreen .controles-personalizados,
+    #videoContenedor:-webkit-full-screen .controles-personalizados {
+        padding: 10px 15px 10px !important;
+    }
+}
