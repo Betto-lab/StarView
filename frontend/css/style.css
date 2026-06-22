@@ -2454,90 +2454,74 @@ textarea:focus{
 }
 
 /* =========================================
-   BUSCADOR FLOTANTE (DROPDOWN ESTILO NETFLIX)
+   PANTALLA DE BÚSQUEDA (SUPERPOSICIÓN)
 ========================================= */
-
-/* 1. Aseguramos que el contenedor padre sirva de ancla */
-.search-container, .busqueda {
-    position: relative;
-}
-
-/* 2. La caja mágica flotante */
-.search-dropdown {
-    position: absolute;
-    top: 120%; /* Aparece justo debajo de la barra */
-    right: 0;
-    width: 100%;
-    min-width: 280px;
-    max-height: 400px;
-    overflow-y: auto;
-    
-    /* Usamos tus colores exactos de style.css */
-    background: var(--bg-card); 
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: var(--shadow);
-    z-index: 9999;
+.search-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(7, 9, 17, 0.98); /* Fondo casi negro */
+    backdrop-filter: blur(15px);
+    z-index: 999999;
     display: flex;
     flex-direction: column;
-    padding: 10px;
-    gap: 8px;
+    padding: 40px 5%;
+    overflow-y: auto;
+    transition: opacity 0.3s ease;
 }
 
-.search-dropdown.oculto {
+.search-overlay.oculto {
     display: none !important;
+    opacity: 0;
 }
 
-/* 3. Diseño de cada película en la lista */
-.search-item {
+.search-overlay-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px;
-    border-radius: 8px;
-    transition: .25s ease;
-    text-decoration: none;
+    gap: 15px;
+    margin-bottom: 40px;
 }
 
-.search-item:hover {
+.search-overlay-header button {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 28px;
+    cursor: pointer;
+    padding: 10px;
+    transition: 0.3s ease;
+}
+
+.search-overlay-header button:hover {
+    color: #e50914;
+    transform: scale(1.1);
+}
+
+.search-overlay-header input {
+    flex: 1;
+    font-size: 20px;
+    padding: 18px 24px;
+    border-radius: 999px;
     background: rgba(255, 255, 255, 0.08);
-    transform: translateX(4px); /* Pequeño salto a la derecha al pasar el mouse */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    outline: none;
 }
 
-.search-item img {
-    width: 40px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 6px;
-    background: #111827;
+.search-overlay-header input:focus {
+    border-color: #e50914;
+    box-shadow: 0 0 15px rgba(229, 9, 20, 0.3);
 }
 
-.search-item-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.search-item-info h4 {
-    margin: 0;
-    font-size: 14px;
-    color: var(--text);
-    font-weight: 800;
-}
-
-.search-item-info span {
-    font-size: 12px;
-    color: var(--muted);
-}
-
-/* 4. ADAPTACIÓN PERFECTA PARA CELULARES */
 @media (max-width: 600px) {
-    .search-dropdown {
-        position: fixed; /* Lo despegamos de la barra */
-        top: 70px; /* Aparece debajo del header completo */
-        left: 5%;
-        width: 90%;
-        max-height: 65vh;
-        box-shadow: 0 30px 100px rgba(0,0,0,0.9);
+    .search-overlay-header {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    .search-overlay-header input {
+        font-size: 16px;
+        padding: 14px 20px;
     }
 }

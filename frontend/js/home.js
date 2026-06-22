@@ -231,55 +231,58 @@ async function cargarCatalogo() {
     }
 }
 
-// 3. LA FUNCIÓN DEL BUSCADOR INTELIGENTE EN TIEMPO REAL (VERSIÓN DESPLEGABLE)
-function buscadorInteligente() {
-    const inputElement = document.getElementById("searchInputTop") || document.getElementById("buscar");
-    const searchDropdown = document.getElementById("searchDropdown");
-    
-    if (!inputElement || !searchDropdown) return;
-    
-    const query = inputElement.value.toLowerCase().trim();
+/* =========================================
+   SISTEMA DE BÚSQUEDA EN SUPERPOSICIÓN
+========================================= */
+function abrirBuscadorFlotante() {
+    const overlay = document.getElementById("searchOverlay");
+    const input = document.getElementById("searchInputOverlay");
+    if (overlay && input) {
+        overlay.classList.remove("oculto");
+        input.focus();
+        document.body.style.overflow = "hidden"; // Congela el fondo para que no hagas scroll por accidente
+    }
+}
 
-    // Ocultar cajón si no hay texto o es muy corto
+function cerrarBuscadorFlotante() {
+    const overlay = document.getElementById("searchOverlay");
+    const input = document.getElementById("searchInputOverlay");
+    const resultados = document.getElementById("searchResults");
+    if (overlay) {
+        overlay.classList.add("oculto");
+        document.body.style.overflow = "auto"; // Devuelve el scroll normal a la página
+        if(input) input.value = "";
+        if(resultados) resultados.innerHTML = "";
+    }
+}
+
+function realizarBusquedaFlotante() {
+    const input = document.getElementById("searchInputOverlay");
+    const contenedor = document.getElementById("searchResults");
+    
+    if (!input || !contenedor || !window.catalogoGlobal) return;
+    
+    const query = input.value.toLowerCase().trim();
+    
     if (query.length === 0) {
-        searchDropdown.classList.add("oculto");
+        contenedor.innerHTML = ""; // Si borraste el texto, se limpia la pantalla
         return;
     }
 
-    if (!window.catalogoGlobal) return;
-
-    // Filtramos el contenido global en memoria
+    // Buscamos en el catálogo global
     const filtrados = window.catalogoGlobal.filter(item => 
         (item.titulo && item.titulo.toLowerCase().includes(query)) || 
         (item.genero && item.genero.toLowerCase().includes(query)) ||
         (item.tipo && item.tipo.toLowerCase().includes(query))
     );
 
-    // Limpiamos el cajón flotante
-    searchDropdown.innerHTML = "";
-
     if (filtrados.length === 0) {
-        searchDropdown.innerHTML = `<p style="color: #a3a3a3; text-align: center; margin: 10px 0; font-size: 13px;">No se encontraron resultados.</p>`;
-    } else {
-        // Llenamos el cajón con los primeros 6 resultados
-        filtrados.slice(0, 6).forEach(item => {
-            const enlace = document.createElement("a");
-            enlace.className = "search-item";
-            enlace.href = `reproductor.html?id=${item.id}`;
-            
-            enlace.innerHTML = `
-                <img src="${normalizarImagen(item.imagen)}" alt="${escapeHTML(item.titulo)}">
-                <div class="search-item-info">
-                    <h4>${escapeHTML(item.titulo)}</h4>
-                    <span>${escapeHTML(item.genero || "Sin género")}</span>
-                </div>
-            `;
-            searchDropdown.appendChild(enlace);
-        });
+        contenedor.innerHTML = `<div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 40px;">No se encontraron resultados para "${query}"</div>`;
+        return;
     }
 
-    // Mostramos el cajón
-    searchDropdown.classList.remove("oculto");
+    // Dibujamos las tarjetas de películas en la pantalla superpuesta
+    contenedor.innerHTML = filtrados.map(item => cardContenido(item)).join("");
 }
 
 // Ocultar el dropdown si el usuario hace clic en cualquier otra parte de la pantalla
@@ -733,20 +736,23 @@ async function inicializarHome() {
     await cargarRecomendacionesUsuario();
     await cargarDatosTopbar();
 
-    const buscarTop = document.getElementById("searchInputTop");
-    const btnSearch = document.querySelector(".btn-search-icon");
-
-    if (buscarTop) {
-        buscarTop.addEventListener("input", buscadorInteligente);
-    }
-    
-    // Conectamos el click de la lupa
-    if (btnSearch) {
-        btnSearch.addEventListener("click", toggleSearch);
+   // 1. Conectamos la lupa de tu menú superior para que abra la pantalla
+    const btnSearchIcon = document.querySelector(".btn-search-icon");
+    if (btnSearchIcon) {
+        btnSearchIcon.addEventListener("click", abrirBuscadorFlotante);
     }
 
-    // ¡ESTO ES CLAVE!: Oculta la Biblioteca StarView ni bien el usuario entra a la página
-    activarModoBusqueda(false);
+    // 2. Conectamos la X para cerrar la pantalla
+    const btnCloseSearch = document.getElementById("closeSearchOverlay");
+    if (btnCloseSearch) {
+        btnCloseSearch.addEventListener("click", cerrarBuscadorFlotante);
+    }
+
+    // 3. Conectamos el texto para que busque mientras escribes
+    const inputOverlay = document.getElementById("searchInputOverlay");
+    if (inputOverlay) {
+        inputOverlay.addEventListener("input", realizarBusquedaFlotante);
+    }
 }
 
 inicializarHome();

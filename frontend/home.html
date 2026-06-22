@@ -83,16 +83,6 @@
         <div id="contenedorRecomendados" class="catalogo"></div>
     </section>
 
-    <section class="section-block">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Biblioteca StarView</p>
-                <h2>Catálogo de películas y series</h2>
-            </div>
-        </div>
-
-        <div id="catalogo" class="catalogo"></div>
-    </section>
 
     <section class="section-block">
         <div class="section-heading">
@@ -133,6 +123,13 @@
             <button class="btn btn-primary" onclick="guardarEdicionPerfilActual()">Guardar Cambios</button>
         </div>
     </section>
+</div>
+<div id="searchOverlay" class="search-overlay oculto">
+    <div class="search-overlay-header">
+        <button id="closeSearchOverlay">✖</button>
+        <input type="text" id="searchInputOverlay" placeholder="Escribe una película, serie o género...">
+    </div>
+    <div id="searchResults" class="catalogo"></div> 
 </div>
 </body>
 </html>
