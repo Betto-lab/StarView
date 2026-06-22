@@ -1,25 +1,27 @@
 const mysql = require("mysql2");
 
-// USAR CREATE POOL EN VEZ DE CREATE CONNECTION
-const conexion = mysql.createPool({
-    host: process.env.DB_HOST || process.env.MYSQLHOST || "localhost",
-    user: process.env.DB_USER || process.env.MYSQLUSER || "user",
-    password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || "agilemortal",
-    database: process.env.DB_NAME || process.env.MYSQLDATABASE || "starview",
-    port: process.env.DB_PORT || process.env.MYSQLPORT || 3306,
+// Si existe la URL de Railway (Vercel), la usa. Si no, usa tu configuración local.
+const config = process.env.MYSQL_PUBLIC_URL || {
+    host: process.env.DB_HOST || "localhost",
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "",
+    database: process.env.DB_NAME || "starview",
+    port: process.env.DB_PORT || 3306,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
-});
+};
+
+const conexion = mysql.createPool(config);
 
 // PROBAR LA CONEXIÓN INICIAL
 conexion.getConnection((error, connection) => {
     if (error) {
-        console.error("Error de conexión a la BD en la nube:", error.message);
+        console.error("Error de conexión a la BD:", error.message);
         return;
     }
-    console.log("Conectado a la Base de Datos en la nube (Pool activado)");
-    connection.release(); // Liberar la conexión inicial
+    console.log("¡Conectado a la Base de Datos con éxito!");
+    connection.release(); 
 });
 
 module.exports = conexion;
