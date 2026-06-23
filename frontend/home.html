@@ -12,19 +12,19 @@
     <a href="home.html" class="brand" style="text-decoration: none;">STAR<span>VIEW</span></a>
 
     <nav class="nav">
-        <a href="home.html" class="activo">Inicio</a>
-        <a href="mi-lista.html">Mi Lista</a>
-
+        <!-- Opciones principales -->
+        <a href="home.html">Inicio</a>
+        <a href="mi-lista.html" class="activo">Mi Lista</a>
         <div class="search-container">
-        <input type="text" id="searchInputTop" class="search-input-top" placeholder="Buscar...">
-            <button class="btn-search-icon">🔍</button>
-        </div>
-
+                <button class="btn-search-icon" style="background: transparent; border: none; color: white; font-size: 20px; cursor: pointer;">🔍</button>
+            </div>
+        <!-- Menú Desplegable del Perfil -->
         <div class="nav-perfil">
             <div class="nav-perfil-trigger">
                 <img src="img/Red.jpg" id="navAvatar" class="nav-perfil-avatar" alt="Perfil">
                 <span class="nav-perfil-arrow">▼</span>
             </div>
+            
             <div class="dropdown-menu">
                 <div style="padding: 10px 20px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px;" id="navNombrePerfil">Cargando...</div>
                 
@@ -127,7 +127,7 @@
 <div id="searchOverlay" class="search-overlay oculto">
     <div class="search-overlay-header">
         <button id="closeSearchOverlay">✖</button>
-        <input type="text" id="searchInputOverlay" placeholder="Escribe una película, serie o género...">
+        <input type="text" id="searchInputOverlay" placeholder="Escribe una película...">
     </div>
     <div id="searchResults" class="catalogo"></div> 
 </div>
