@@ -1,5 +1,5 @@
 /* =========================================
-   SISTEMA DE BÚSQUEDA GLOBAL (SUPERPOSICIÓN)
+   SISTEMA DE BÚSQUEDA GLOBAL (SUPERPOSICIÓN) hola
 ========================================= */
 const API_BUSCADOR = window.location.origin;
 let catalogoBuscadorGlobal = [];
