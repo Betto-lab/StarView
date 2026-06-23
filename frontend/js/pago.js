@@ -1,9 +1,10 @@
 const API_BASE = window.location.origin;
 
-let metodoPagoSeleccionado = "Tarjeta simulada";
+let metodoPagoSeleccionado = "Mercado Pago";
 
 function cerrarSesion() {
-    localStorage.clear(); sessionStorage.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     window.location.href = "index.html";
 }
 
@@ -17,7 +18,7 @@ function mostrarMensajePago(texto, tipo = "error") {
 }
 
 function validarAccesoPago() {
-    const usuario_id = (localStorage.getItem("usuario_id") || sessionStorage.getItem("usuario_id"));
+    const usuario_id = localStorage.getItem("usuario_id") || sessionStorage.getItem("usuario_id");
     const plan_id = localStorage.getItem("plan_id");
     const plan_precio = localStorage.getItem("plan_precio");
 
@@ -77,129 +78,35 @@ function seleccionarMetodoPago(metodo, elemento) {
         opcion.classList.remove("active");
     });
 
-    elemento.classList.add("active");
+    if (elemento) {
+        elemento.classList.add("active");
 
-    const input = elemento.querySelector("input");
+        const input = elemento.querySelector("input");
 
-    if (input) {
-        input.checked = true;
+        if (input) {
+            input.checked = true;
+        }
     }
 
     ocultarPanelesPago();
 
-    if (metodo === "Tarjeta simulada") {
-        document.getElementById("datosTarjeta").classList.add("active-panel");
+    const datosTarjeta = document.getElementById("datosTarjeta");
+    const datosYape = document.getElementById("datosYape");
+    const datosPaypal = document.getElementById("datosPaypal");
+
+    if (metodo === "Tarjeta simulada" && datosTarjeta) {
+        datosTarjeta.classList.add("active-panel");
     }
 
-    if (metodo === "Yape / Plin simulado") {
-        document.getElementById("datosYape").classList.add("active-panel");
+    if (metodo === "Yape / Plin simulado" && datosYape) {
+        datosYape.classList.add("active-panel");
     }
 
-    if (metodo === "PayPal simulado") {
-        document.getElementById("datosPaypal").classList.add("active-panel");
+    if (metodo === "PayPal simulado" && datosPaypal) {
+        datosPaypal.classList.add("active-panel");
     }
 
     mostrarMensajePago("");
-}
-
-function validarCorreo(correo) {
-    const expresion = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return expresion.test(correo);
-}
-
-function validarDatosTarjeta() {
-    const numero = document.getElementById("numeroTarjeta").value.trim();
-    const vencimiento = document.getElementById("vencimientoTarjeta").value.trim();
-    const cvv = document.getElementById("cvvTarjeta").value.trim();
-
-    if (!numero || !vencimiento || !cvv) {
-        mostrarMensajePago("Completa los datos de la tarjeta simulada");
-        return false;
-    }
-
-    if (numero.replaceAll(" ", "").length < 12) {
-        mostrarMensajePago("El número de tarjeta simulado no es válido");
-        return false;
-    }
-
-    if (!/^\d{2}\/\d{2}$/.test(vencimiento)) {
-        mostrarMensajePago("El vencimiento debe tener formato MM/AA");
-        return false;
-    }
-
-    if (!/^\d{3}$/.test(cvv)) {
-        mostrarMensajePago("El CVV debe tener 3 dígitos");
-        return false;
-    }
-
-    return true;
-}
-
-function validarDatosYape() {
-    const numero = document.getElementById("numeroYape").value.trim();
-    const titular = document.getElementById("titularYape").value.trim();
-    const codigo = document.getElementById("codigoYape").value.trim();
-
-    if (!numero || !titular || !codigo) {
-        mostrarMensajePago("Completa número, titular y código de operación de Yape / Plin");
-        return false;
-    }
-
-    if (!/^9\d{8}$/.test(numero)) {
-        mostrarMensajePago("El número de celular debe tener 9 dígitos y empezar con 9");
-        return false;
-    }
-
-    if (titular.length < 3) {
-        mostrarMensajePago("Ingresa un nombre de titular válido");
-        return false;
-    }
-
-    if (codigo.length < 6) {
-        mostrarMensajePago("Ingresa un código de operación válido");
-        return false;
-    }
-
-    return true;
-}
-
-function validarDatosPaypal() {
-    const correo = document.getElementById("correoPaypal").value.trim();
-    const codigo = document.getElementById("codigoPaypal").value.trim();
-
-    if (!correo || !codigo) {
-        mostrarMensajePago("Completa correo PayPal y código de operación");
-        return false;
-    }
-
-    if (!validarCorreo(correo)) {
-        mostrarMensajePago("Ingresa un correo PayPal válido");
-        return false;
-    }
-
-    if (codigo.length < 6) {
-        mostrarMensajePago("Ingresa un código de operación válido");
-        return false;
-    }
-
-    return true;
-}
-
-function validarDatosPago() {
-    if (metodoPagoSeleccionado === "Tarjeta simulada") {
-        return validarDatosTarjeta();
-    }
-
-    if (metodoPagoSeleccionado === "Yape / Plin simulado") {
-        return validarDatosYape();
-    }
-
-    if (metodoPagoSeleccionado === "PayPal simulado") {
-        return validarDatosPaypal();
-    }
-
-    mostrarMensajePago("Selecciona un método de pago");
-    return false;
 }
 
 async function confirmarPago(event) {
@@ -208,51 +115,90 @@ async function confirmarPago(event) {
     }
 
     if (!validarAccesoPago()) return;
-    if (!validarDatosPago()) return;
 
-    const usuario_id = (localStorage.getItem("usuario_id") || sessionStorage.getItem("usuario_id"));
+    const botonPago = document.querySelector("button[type='submit'], .btn-pagar, #btnPagar");
+
+    const usuario_id = localStorage.getItem("usuario_id") || sessionStorage.getItem("usuario_id");
     const plan_id = localStorage.getItem("plan_id");
+    const plan_nombre = localStorage.getItem("plan_nombre");
     const plan_precio = localStorage.getItem("plan_precio");
 
+    if (!usuario_id || !plan_id || !plan_precio) {
+        mostrarMensajePago("No se encontró el usuario o el plan seleccionado.");
+        return;
+    }
+
     try {
-        const respuesta = await fetch(`${API_BASE}/pagos`, {
+        if (botonPago) {
+            botonPago.disabled = true;
+            botonPago.innerText = "Redirigiendo a Mercado Pago...";
+        }
+
+        mostrarMensajePago("Creando pago seguro con Mercado Pago...", "ok");
+
+        localStorage.setItem("plan_id_pendiente", plan_id);
+        localStorage.setItem("plan_nombre_pendiente", plan_nombre || "");
+        localStorage.setItem("plan_precio_pendiente", plan_precio);
+
+        const respuesta = await fetch(`${API_BASE}/mercadopago/crear-preferencia`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                usuario_id: usuario_id,
-                plan_id: plan_id,
-                metodo_pago: metodoPagoSeleccionado,
-                monto: plan_precio
+                usuario_id,
+                plan_id
             })
         });
 
         const datos = await respuesta.json();
 
         if (!datos.ok) {
-            mostrarMensajePago(datos.mensaje || "No se pudo procesar el pago");
+            mostrarMensajePago(datos.mensaje || "No se pudo iniciar el pago con Mercado Pago");
+
+            if (botonPago) {
+                botonPago.disabled = false;
+                botonPago.innerText = "Confirmar pago";
+            }
+
             return;
         }
 
-        mostrarMensajePago("Pago realizado correctamente. Suscripción activada.", "ok");
+        const urlPago = datos.init_point || datos.sandbox_init_point;
 
-        localStorage.removeItem("plan_id");
-        localStorage.removeItem("plan_nombre");
-        localStorage.removeItem("plan_precio");
+        if (!urlPago) {
+            mostrarMensajePago("Mercado Pago no devolvió un enlace de pago.");
 
-        setTimeout(() => {
-            window.location.href = "seleccionar-perfil.html";
-        }, 900);
+            if (botonPago) {
+                botonPago.disabled = false;
+                botonPago.innerText = "Confirmar pago";
+            }
+
+            return;
+        }
+
+        window.location.href = urlPago;
 
     } catch (error) {
-        console.log("Error al confirmar pago:", error);
-        mostrarMensajePago("No se pudo conectar con el servidor");
+        console.log("Error al crear preferencia de Mercado Pago:", error);
+
+        mostrarMensajePago("No se pudo conectar con Mercado Pago.");
+
+        if (botonPago) {
+            botonPago.disabled = false;
+            botonPago.innerText = "Confirmar pago";
+        }
     }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     if (validarAccesoPago()) {
         cargarResumenPago();
+    }
+
+    const formularioPago = document.getElementById("formPago");
+
+    if (formularioPago) {
+        formularioPago.addEventListener("submit", confirmarPago);
     }
 });

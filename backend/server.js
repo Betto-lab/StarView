@@ -160,7 +160,7 @@ app.post("/registro", async (req, res) => {
     }
 
     // ==========================================
-    // 🔥 AQUÍ ENTRA LA GUILLOTINA BACKEND (DNS) 🔥
+    //  AQUÍ ENTRA LA GUILLOTINA BACKEND (DNS) 
     // ==========================================
     const esReal = await dominioAceptaCorreos(correo);
     if (!esReal) {
@@ -1285,6 +1285,95 @@ app.get("/planes", (req, res) => {
             }
 
             res.json(resultados);
+        }
+    );
+});
+
+app.post("/mercadopago/crear-preferencia", (req, res) => {
+    const { usuario_id, plan_id } = req.body;
+
+    if (!clienteMP) {
+        return res.json({
+            ok: false,
+            mensaje: "Mercado Pago no está configurado. Falta MP_ACCESS_TOKEN."
+        });
+    }
+
+    if (!usuario_id || !plan_id) {
+        return res.json({
+            ok: false,
+            mensaje: "Datos incompletos para crear la preferencia de pago"
+        });
+    }
+
+    conexion.query(
+        "SELECT * FROM planes WHERE id = ?",
+        [plan_id],
+        async (error, resultados) => {
+            if (error) {
+                console.log("Error al buscar plan:", error);
+
+                return res.json({
+                    ok: false,
+                    mensaje: "Error al buscar el plan"
+                });
+            }
+
+            if (resultados.length === 0) {
+                return res.json({
+                    ok: false,
+                    mensaje: "Plan no encontrado"
+                });
+            }
+
+            const plan = resultados[0];
+            const baseUrl = process.env.BASE_URL || "https://star-view-steel.vercel.app";
+
+            try {
+                const preference = new Preference(clienteMP);
+
+                const resultado = await preference.create({
+                    body: {
+                        items: [
+                            {
+                                id: String(plan.id),
+                                title: `Plan ${plan.nombre} - StarView`,
+                                description: `Suscripción al plan ${plan.nombre}`,
+                                quantity: 1,
+                                currency_id: "PEN",
+                                unit_price: Number(plan.precio)
+                            }
+                        ],
+                        metadata: {
+                            usuario_id: Number(usuario_id),
+                            plan_id: Number(plan.id)
+                        },
+                        external_reference: `${usuario_id}-${plan.id}-${Date.now()}`,
+                        back_urls: {
+                            success: `${baseUrl}/pago-exitoso.html?usuario_id=${usuario_id}&plan_id=${plan.id}&monto=${plan.precio}`,
+                            failure: `${baseUrl}/pago-fallido.html`,
+                            pending: `${baseUrl}/pago-pendiente.html`
+                        },
+                        auto_return: "approved"
+                    }
+                });
+
+                res.json({
+                    ok: true,
+                    mensaje: "Preferencia creada correctamente",
+                    preference_id: resultado.id,
+                    init_point: resultado.init_point,
+                    sandbox_init_point: resultado.sandbox_init_point
+                });
+
+            } catch (errorMP) {
+                console.log("Error al crear preferencia de Mercado Pago:", errorMP);
+
+                res.json({
+                    ok: false,
+                    mensaje: "No se pudo crear la preferencia de pago"
+                });
+            }
         }
     );
 });
