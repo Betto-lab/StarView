@@ -69,13 +69,8 @@ async function iniciarSesion() {
     try {
         const respuesta = await fetch(`${API_BASE}/login`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                correo,
-                password
-            })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ correo, password })
         });
 
         const datos = await respuesta.json();
@@ -91,37 +86,49 @@ async function iniciarSesion() {
         }
 
         const usuario = datos.usuario || {};
-
-        const usuarioId =
-            usuario.id ||
-            usuario.id_usuario ||
-            usuario.usuario_id ||
-            datos.usuario_id ||
-            datos.id_usuario ||
-            datos.id;
+        const usuarioId = usuario.id || usuario.id_usuario || usuario.usuario_id || datos.usuario_id || datos.id_usuario || datos.id;
 
         if (!usuarioId) {
-            mostrarMensaje("Error: no se recibió el ID del usuario desde el servidor");
-            console.log("Respuesta del servidor:", datos);
+            mostrarMensaje("Error: no se recibió el ID del usuario");
             return;
         }
 
-        localStorage.setItem("usuario_id", usuarioId);
-        localStorage.setItem("nombre_usuario", usuario.nombre || usuario.nombre_usuario || "");
+        // --- LÓGICA CORREGIDA DE CHECKBOX ---
+        const mantenerSesion = document.getElementById("mantenerSesion")?.checked;
 
+        if (mantenerSesion) {
+            localStorage.setItem("usuario_id", usuarioId);
+            localStorage.setItem("nombre_usuario", usuario.nombre || usuario.nombre_usuario || "");
+        } else {
+            sessionStorage.setItem("usuario_id", usuarioId);
+            sessionStorage.setItem("nombre_usuario", usuario.nombre || usuario.nombre_usuario || "");
+        }
+
+        // Limpiar perfiles previos de cualquier sesión anterior
         localStorage.removeItem("perfil_id");
         localStorage.removeItem("perfil_nombre");
+        sessionStorage.removeItem("perfil_id");
+        sessionStorage.removeItem("perfil_nombre");
 
         mostrarMensaje("Inicio de sesión correcto", "ok");
 
-        const volver = localStorage.getItem("volver_despues_login");
-
+        // --- DESVÍO DE ROLES (RBAC) ---
         setTimeout(() => {
-            if (volver) {
-                localStorage.removeItem("volver_despues_login");
-                window.location.href = volver;
+            // 🚨 PON AQUÍ EL CORREO EXACTO DEL ADMINISTRADOR
+            const CORREO_ADMIN = "soporte.starview@gmail.com"; 
+
+            // Si es el administrador, va al panel de control
+            if (correo === CORREO_ADMIN) {
+                window.location.href = "admin.html";
             } else {
-                window.location.href = "seleccionar-perfil.html";
+                // Si es un cliente normal, va a perfiles (o a la página de donde venía)
+                const volver = localStorage.getItem("volver_despues_login");
+                if (volver) {
+                    localStorage.removeItem("volver_despues_login");
+                    window.location.href = volver;
+                } else {
+                    window.location.href = "seleccionar-perfil.html";
+                }
             }
         }, 500);
 
@@ -133,25 +140,6 @@ async function iniciarSesion() {
         }
         mostrarMensaje("No se pudo conectar con el servidor");
     }
-    // NUEVA LÓGICA DE CHECKBOX: Detecta si está marcado
-        const mantenerSesion = document.getElementById("mantenerSesion")?.checked;
-
-        if (mantenerSesion) {
-            // Se guarda permanente
-            localStorage.setItem("usuario_id", usuarioId);
-            localStorage.setItem("nombre_usuario", usuario.nombre || usuario.nombre_usuario || "");
-        } else {
-            // Se destruye al cerrar la pestaña
-            sessionStorage.setItem("usuario_id", usuarioId);
-            sessionStorage.setItem("nombre_usuario", usuario.nombre || usuario.nombre_usuario || "");
-        }
-
-        localStorage.removeItem("perfil_id");
-        localStorage.removeItem("perfil_nombre");
-        sessionStorage.removeItem("perfil_id");
-        sessionStorage.removeItem("perfil_nombre");
-
-        mostrarMensaje("Inicio de sesión correcto", "ok");
 }
 
 async function pedirCodigoCuenta() {
