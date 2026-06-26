@@ -4,6 +4,8 @@ const axios = require("axios");
 const bcrypt = require("bcrypt");
 const path = require("path");
 const dns = require("dns");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
 require("dotenv").config();
 
@@ -22,7 +24,30 @@ const app = express();
 const registrosPendientes = new Map();
 const recuperacionesPerfil = new Map();
 const recuperacionesCuenta = new Map();
+const cron = require('node-cron');
 
+/* =========================================
+   TAREA PROGRAMADA: AUDITORÍA DE SUSCRIPCIONES (CRON JOB)
+   Se ejecuta todos los días a las 00:01 AM
+========================================= */
+cron.schedule('1 0 * * *', () => {
+    console.log("🕒 [CRON] Ejecutando auditoría de suscripciones vencidas...");
+    
+    // Busca las suscripciones activas cuya fecha de fin ya pasó y las cancela
+    const query = `
+        UPDATE suscripciones 
+        SET estado = 'vencida' 
+        WHERE estado = 'activa' AND fecha_fin < NOW()
+    `;
+    
+    conexion.query(query, (err, resultados) => {
+        if (err) {
+            console.error("❌ [CRON] Error al actualizar suscripciones:", err);
+        } else {
+            console.log(`✅ [CRON] Auditoría completada. Suscripciones vencidas hoy: ${resultados.affectedRows}`);
+        }
+    });
+});
 function dominioAceptaCorreos(correo) {
     return new Promise((resolve) => {
         const dominio = correo.split("@")[1];
@@ -89,8 +114,39 @@ async function enviarCorreoVerificacion(correo, nombre, codigo, tipo = "registro
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "../frontend")));
 
+/* =========================================
+   MIDDLEWARES DE SEGURIDAD (JWT)
+========================================= */
+const JWT_SECRET = process.env.JWT_SECRET || "starview_upao_secreto_2026";
+
+// Guardia 1: Verifica que sea un usuario registrado
+const verificarUsuario = (req, res, next) => {
+    const token = req.cookies.token; 
+    
+    if (!token) {
+        return res.status(401).json({ ok: false, mensaje: "Acceso denegado. No hay sesión activa." });
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, decodificado) => {
+        if (err) return res.status(403).json({ ok: false, mensaje: "Sesión inválida o expirada." });
+        
+        req.usuario = decodificado; // Guardamos los datos del usuario en la petición
+        next(); // ¡Puedes pasar!
+    });
+};
+
+// Guardia 2: Verifica que sea el Administrador
+const verificarAdmin = (req, res, next) => {
+    verificarUsuario(req, res, () => {
+        if (req.usuario.correo !== "soporte.starview@gmail.com") {
+            return res.status(403).json({ ok: false, mensaje: "Bloqueado: Nivel de administrador requerido." });
+        }
+        next(); // ¡Pasa, jefe!
+    });
+};
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
@@ -435,6 +491,25 @@ app.post("/login", (req, res) => {
                 });
             }
 
+            // --- NUEVO: GENERACIÓN DE JWT Y COOKIE HTTP-ONLY ---
+            const tokenPayload = {
+                id: usuario.id,
+                nombre: usuario.nombre,
+                correo: usuario.correo
+            };
+
+            // Creamos el token cifrado que dura 24 horas
+            const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '24h' });
+
+            // Lo metemos en una caja fuerte (HttpOnly) que los hackers no pueden leer con JavaScript
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production', // En Vercel exigirá HTTPS
+                sameSite: 'strict',
+                maxAge: 24 * 60 * 60 * 1000 // 24 horas
+            });
+            // --------------------------------------------------
+
             res.json({
                 ok: true,
                 mensaje: "Inicio de sesión correcto",
@@ -446,6 +521,12 @@ app.post("/login", (req, res) => {
             });
         }
     );
+});
+
+// NUEVA RUTA: Para destruir la cookie cuando cierran sesión
+app.post("/api/logout", (req, res) => {
+    res.clearCookie('token');
+    res.json({ ok: true, mensaje: "Sesión cerrada correctamente" });
 });
 
 /* =========================
@@ -508,7 +589,56 @@ app.get("/contenido/perfil/:perfil_id", (req, res) => {
         }
     );
 });
+/* =========================================
+   RUTA SEGURA DE REPRODUCCIÓN (ANTI-BYPASS & CONTROL PARENTAL)
+========================================= */
+app.post("/api/reproducir/seguro", (req, res) => {
+    const { usuario_id, perfil_id, contenido_id } = req.body;
 
+    if (!usuario_id || !perfil_id || !contenido_id) {
+        return res.json({ ok: false, mensaje: "Datos incompletos para reproducir." });
+    }
+
+    // 1. Verificamos que la suscripción siga activa y vigente
+    conexion.query(
+        `SELECT estado, fecha_fin FROM suscripciones 
+         WHERE usuario_id = ? 
+         AND (estado = 'activa' OR (estado = 'cancelada' AND fecha_fin >= NOW()))
+         ORDER BY id DESC LIMIT 1`,
+        [usuario_id],
+        (errSub, subs) => {
+            if (errSub || subs.length === 0) {
+                return res.json({ ok: false, mensaje: "Tu suscripción ha expirado o no existe. Renueva tu plan para seguir viendo." });
+            }
+
+            // 2. Verificamos el perfil
+            conexion.query("SELECT infantil FROM perfiles WHERE id = ?", [perfil_id], (errPerf, perfiles) => {
+                if (errPerf || perfiles.length === 0) return res.json({ ok: false, mensaje: "Perfil no encontrado." });
+                const perfilEsInfantil = Number(perfiles[0].infantil) === 1;
+
+                // 3. Verificamos la película
+                conexion.query("SELECT video_url, infantil, COALESCE(activo, 1) as activo FROM contenido WHERE id = ?", [contenido_id], (errCont, contenidos) => {
+                    if (errCont || contenidos.length === 0 || contenidos[0].activo === 0) {
+                        return res.json({ ok: false, mensaje: "Este contenido no está disponible." });
+                    }
+
+                    const peliEsInfantil = Number(contenidos[0].infantil) === 1;
+
+                    // 4. EL BLINDAJE FINAL: Bloqueo parental a nivel de servidor
+                    if (perfilEsInfantil && !peliEsInfantil) {
+                        return res.json({ ok: false, mensaje: "⛔ Acceso denegado: Este contenido no es apto para niños." });
+                    }
+
+                    // Si pasó todo (pagó, existe, y tiene edad), entregamos la llave (URL)
+                    res.json({ 
+                        ok: true, 
+                        video_url: contenidos[0].video_url 
+                    });
+                });
+            });
+        }
+    );
+});
 app.get("/contenido/:id", (req, res) => {
     const id = req.params.id;
 
@@ -1667,8 +1797,16 @@ app.post("/mercadopago/crear-preferencia", (req, res) => {
         }
     });
 });
-app.get("/facturacion/:usuario_id", (req, res) => {
+/* =========================================
+   FACTURACIÓN (RUTA PROTEGIDA CON JWT)
+========================================= */
+app.get("/facturacion/:usuario_id", verificarUsuario, (req, res) => {
     const usuario_id = req.params.usuario_id;
+
+    // 🚨 EL BLINDAJE: Verificamos si el que pide la información es el dueño o el admin
+    if (req.usuario.id !== parseInt(usuario_id) && req.usuario.correo !== "soporte.starview@gmail.com") {
+        return res.status(403).json({ ok: false, mensaje: "Intento de robo de identidad bloqueado." });
+    }
 
     conexion.query(
         `SELECT p.*, pl.nombre AS plan_nombre
@@ -2536,7 +2674,7 @@ app.post("/api/suscripciones/cancelar", (req, res) => {
 /* =========================================
    ELIMINAR PELÍCULA DEFINITIVAMENTE (HARD DELETE)
 ========================================= */
-app.delete("/api/admin/contenido/:id", (req, res) => {
+app.delete("/api/admin/contenido/:id", verificarAdmin, (req, res) => {
     const id = req.params.id;
 
     // 1. Borramos los registros huérfanos en "Mi Lista"
@@ -2671,7 +2809,7 @@ app.get("/panel-admin/:usuario_id", (req, res) => {
                             </div>
 
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <h2 style="margin: 0;">Gestión de Contenido (CMS)</h2>
+                                <h2 style="margin: 0;">Gestión de Contenido </h2>
                                 <div style="display: flex; gap: 15px; align-items: center;">
                                     <input type="text" id="buscadorCMS" onkeyup="filtrarTabla()" placeholder="🔍 Buscar por título..." class="input-admin" style="margin-bottom: 0; width: 250px;">
                                     <button onclick="abrirModalCrear()" style="background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; white-space: nowrap;">➕ Agregar Película</button>
@@ -2861,10 +2999,34 @@ app.get("/panel-admin/:usuario_id", (req, res) => {
         });
     });
 });
+
+/* =========================================
+   CREAR NUEVA PELÍCULA DESDE EL ADMIN (CMS)
+========================================= */
+app.post("/api/admin/contenido", verificarAdmin, (req, res) => {
+    const { titulo, genero, descripcion, infantil, video_url, imagen } = req.body;
+
+    if (!titulo || !video_url) {
+        return res.json({ ok: false, mensaje: "El título y la URL del video son obligatorios." });
+    }
+
+    conexion.query(
+        `INSERT INTO contenido (titulo, tipo, genero, descripcion, infantil, video_url, imagen, activo, origen) 
+         VALUES (?, 'pelicula', ?, ?, ?, ?, ?, 1, 'propio')`,
+        [titulo, genero || "Sin género", descripcion || "", infantil ? 1 : 0, video_url, imagen || ""],
+        (err, resultado) => {
+            if (err) {
+                console.error("Error al crear película:", err);
+                return res.json({ ok: false, mensaje: "Error en la base de datos." });
+            }
+            res.json({ ok: true, mensaje: "Película agregada exitosamente al catálogo." });
+        }
+    );
+});
 /* =========================================
    EDITAR PELÍCULA DESDE EL ADMIN (CMS)
 ========================================= */
-app.put("/api/admin/contenido/:id", (req, res) => {
+app.put("/api/admin/contenido/:id", verificarAdmin, (req, res) => {
     const id = req.params.id;
     const { titulo, genero, descripcion, infantil, video_url, imagen, activo } = req.body;
 

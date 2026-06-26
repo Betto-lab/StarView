@@ -25,7 +25,9 @@ async function cargarFacturacion() {
     const contenedor = document.getElementById("tablaPagos");
 
     try {
-        const respuesta = await fetch(`${API_BASE}/facturacion/${usuario_id}`);
+        const respuesta = await fetch(`${API_BASE}/facturacion/${usuario_id}`, {
+    credentials: "include" // 👈 ¡ESTO ES CLAVE! Le dice al navegador que envíe tu Token secreto
+});
         const pagos = await respuesta.json();
 
         contenedor.innerHTML = "";
