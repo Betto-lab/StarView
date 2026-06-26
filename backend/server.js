@@ -2260,5 +2260,35 @@ app.post("/api/suscripciones/cancelar", (req, res) => {
         }
     );
 });
+/* =========================================
+   PANEL DE ADMINISTRACIÓN (DASHBOARD)
+========================================= */
+app.get("/api/admin/stats", (req, res) => {
+    // 1. Contamos el total de usuarios registrados
+    const queryUsuarios = "SELECT COUNT(*) AS total FROM usuarios";
+    // 2. Sumamos todo el dinero de los pagos completados
+    const queryIngresos = "SELECT SUM(monto) AS total_ingresos FROM pagos WHERE estado = 'pagado'";
+    // 3. Contamos cuántas suscripciones están activas ahora mismo
+    const querySuscripciones = "SELECT COUNT(*) AS activas FROM suscripciones WHERE estado = 'activa'";
+
+    conexion.query(queryUsuarios, (err1, resUsuarios) => {
+        if (err1) return res.json({ ok: false });
+        
+        conexion.query(queryIngresos, (err2, resIngresos) => {
+            if (err2) return res.json({ ok: false });
+            
+            conexion.query(querySuscripciones, (err3, resSuscripciones) => {
+                if (err3) return res.json({ ok: false });
+
+                res.json({
+                    ok: true,
+                    usuarios: resUsuarios[0].total || 0,
+                    ingresos: Number(resIngresos[0].total_ingresos || 0).toFixed(2),
+                    suscripciones_activas: resSuscripciones[0].activas || 0
+                });
+            });
+        });
+    });
+});
 
 module.exports = app;

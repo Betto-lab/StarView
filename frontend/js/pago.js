@@ -166,6 +166,12 @@ async function confirmarPago(event) {
         event.preventDefault();
     }
 
+    // --- NUEVA VALIDACIÓN: TÉRMINOS Y CONDICIONES ---
+    const chkTerminos = document.getElementById("chkTerminos");
+    if (chkTerminos && !chkTerminos.checked) {
+        mostrarMensajePago("Debes aceptar los Términos y Condiciones para poder realizar el pago.");
+        return; // Detiene la ejecución aquí mismo
+    }
     if (!validarAccesoPago()) return;
 
     const botonPago = document.querySelector("button[type='submit'], .btn-pagar, #btnPagar");
