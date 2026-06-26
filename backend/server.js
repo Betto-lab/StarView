@@ -905,7 +905,8 @@ app.get("/mi-lista/:perfil_id", (req, res) => {
         `SELECT contenido.*
          FROM mi_lista
          INNER JOIN contenido ON mi_lista.contenido_id = contenido.id
-         WHERE mi_lista.perfil_id = ?
+         WHERE mi_lista.perfil_id = ? 
+         AND COALESCE(contenido.activo, 1) = 1
          ORDER BY mi_lista.id DESC`,
         [perfil_id],
         (error, resultados) => {
@@ -1014,6 +1015,7 @@ app.get("/continuar/:perfil_id", (req, res) => {
          INNER JOIN contenido ON historial.contenido_id = contenido.id
          WHERE historial.perfil_id = ?
          AND historial.terminado = 0
+         AND COALESCE(contenido.activo, 1) = 1
          ORDER BY historial.id DESC`,
         [perfil_id],
         (error, resultados) => {
@@ -2010,11 +2012,12 @@ app.get("/recomendaciones/historial/:perfil_id", (req, res) => {
 
             const esInfantil = perfiles.length > 0 && Number(perfiles[0].infantil) === 1;
 
+            // 1. Aquí agregamos el filtro para que el género favorito no se base en películas ocultas
             conexion.query(
                 `SELECT c.genero, COUNT(*) AS vistas
                  FROM historial h
                  INNER JOIN contenido c ON h.contenido_id = c.id
-                 WHERE h.perfil_id = ?
+                 WHERE h.perfil_id = ? AND COALESCE(c.activo, 1) = 1
                  GROUP BY c.genero
                  ORDER BY vistas DESC
                  LIMIT 1`,
@@ -2029,10 +2032,12 @@ app.get("/recomendaciones/historial/:perfil_id", (req, res) => {
 
                     const generoFavorito = resultados[0].genero.split(",")[0].trim();
 
+                    // 2. Aquí agregamos el filtro para NUNCA recomendar películas ocultas
                     let sql = `
                         SELECT c.*
                         FROM contenido c
                         WHERE c.genero LIKE ?
+                        AND COALESCE(c.activo, 1) = 1
                         AND c.id NOT IN (
                             SELECT contenido_id
                             FROM historial
@@ -2067,7 +2072,6 @@ app.get("/recomendaciones/historial/:perfil_id", (req, res) => {
         }
     );
 });
-
 /* =========================================
    CONTROL DE PANTALLAS SIMULTÁNEAS Y CALIDAD
 ========================================= */
