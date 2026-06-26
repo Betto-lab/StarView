@@ -1100,7 +1100,44 @@ app.put("/historial/progreso", (req, res) => {
         }
     );
 });
+/* =========================================
+   BUSCAR PELÍCULA EN TMDb (PARA AUTOCOMPLETAR EN ADMIN)
+========================================= */
+app.get("/tmdb/buscar-preview", async (req, res) => {
+    const { titulo } = req.query;
 
+    if (!titulo) {
+        return res.json({ ok: false, mensaje: "Falta el título" });
+    }
+
+    try {
+        const respuesta = await axios.get("https://api.themoviedb.org/3/search/movie", {
+            params: {
+                api_key: TMDB_API_KEY, // Usa tu clave segura que ya tienes configurada
+                query: titulo,
+                language: "es-ES"
+            }
+        });
+
+        if (respuesta.data.results && respuesta.data.results.length > 0) {
+            const peli = respuesta.data.results[0]; // Tomamos la primera coincidencia
+            
+            res.json({
+                ok: true,
+                titulo: peli.title,
+                descripcion: peli.overview || "Sin sinopsis disponible.",
+                imagen: peli.poster_path ? `https://image.tmdb.org/t/p/w500${peli.poster_path}` : "",
+                genre_ids: peli.genre_ids || []
+            });
+        } else {
+            res.json({ ok: false, mensaje: "No se encontró la película en TMDb" });
+        }
+
+    } catch (error) {
+        console.log("Error al buscar en TMDb:", error.message);
+        res.json({ ok: false, mensaje: "Error al conectar con TMDb" });
+    }
+});
 /* =========================
    TMDb
 ========================= */
@@ -2260,9 +2297,6 @@ app.post("/api/suscripciones/cancelar", (req, res) => {
         }
     );
 });
-/* =========================================
-   PANEL DE ADMINISTRACIÓN (CRM + CMS COMPLETO)
-========================================= */
 app.get("/panel-admin/:usuario_id", (req, res) => {
     const { usuario_id } = req.params;
 
@@ -2401,18 +2435,22 @@ app.get("/panel-admin/:usuario_id", (req, res) => {
 
                         <div id="modalCrearPelicula" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
                             <div style="background: #111827; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;">
-                                <h2 style="margin-top: 0; border-bottom: 1px solid #1f2937; padding-bottom: 10px; color: #10b981;">Agregar Nueva Película</h2>
+                                <h2 style="margin-top: 0; border-bottom: 1px solid #1f2937; padding-bottom: 10px; color: #10b981;">Agregar Película</h2>
+                                
+                                <label style="color: #94a3b8; font-size: 14px;">Título de la Película *</label>
+                                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                    <input type="text" id="crearTitulo" class="input-admin" placeholder="Ej: Spider-Man" style="margin-bottom: 0;">
+                                    <button type="button" onclick="autocompletarConTMDb()" style="background: #3b82f6; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold; white-space: nowrap;">🔍 Autocompletar</button>
+                                </div>
+                                <p id="msgTmdb" style="color: #3b82f6; font-size: 12px; margin-top: -10px; margin-bottom: 15px; display: none;">Buscando información...</p>
                                 
                                 <label style="color: #94a3b8; font-size: 14px;">URL del Video (Cloudinary, AWS, etc) *</label>
-                                <input type="text" id="crearVideoUrl" class="input-admin" placeholder="https://res.cloudinary.com/...">
-                                
-                                <label style="color: #94a3b8; font-size: 14px;">Título *</label>
-                                <input type="text" id="crearTitulo" class="input-admin" placeholder="Ej: Spider-Man">
+                                <input type="text" id="crearVideoUrl" class="input-admin" placeholder="https://res.cloudinary.com/.../video.mp4">
                                 
                                 <label style="color: #94a3b8; font-size: 14px;">Géneros</label>
                                 <input type="text" id="crearGenero" class="input-admin" placeholder="Acción, Ciencia Ficción">
                                 
-                                <label style="color: #94a3b8; font-size: 14px;">URL de la Portada (Opcional)</label>
+                                <label style="color: #94a3b8; font-size: 14px;">URL de la Portada</label>
                                 <input type="text" id="crearImagenUrl" class="input-admin" placeholder="https://...">
 
                                 <label style="color: #94a3b8; font-size: 14px;">Sinopsis</label>
@@ -2477,7 +2515,6 @@ app.get("/panel-admin/:usuario_id", (req, res) => {
 
                             // --- LÓGICA DE CREAR NUEVA PELÍCULA ---
                             function abrirModalCrear() {
-                                // Limpiamos los campos
                                 document.getElementById('crearVideoUrl').value = '';
                                 document.getElementById('crearTitulo').value = '';
                                 document.getElementById('crearGenero').value = '';
@@ -2518,6 +2555,48 @@ app.get("/panel-admin/:usuario_id", (req, res) => {
                                     if(resData.ok) window.location.reload();
                                     else { alert(resData.mensaje); btn.innerText = "Vincular y Guardar"; btn.disabled = false; }
                                 } catch(e) { alert("Error de conexión"); btn.innerText = "Vincular y Guardar"; btn.disabled = false; }
+                            }
+
+                            // --- MAGIA DE AUTOCOMPLETADO TMDB ---
+                            // ESTA ES LA FUNCIÓN QUE FALTABA
+                            async function autocompletarConTMDb() {
+                                const titulo = document.getElementById('crearTitulo').value.trim();
+                                const msg = document.getElementById('msgTmdb');
+                                
+                                if (!titulo) {
+                                    alert("Primero escribe el título de la película para poder buscarla.");
+                                    return;
+                                }
+
+                                msg.innerText = "Buscando información en tu servidor TMDb...";
+                                msg.style.color = "#3b82f6";
+                                msg.style.display = "block";
+
+                                try {
+                                    // Llama a tu servidor backend
+                                    const res = await fetch(window.location.origin + \`/tmdb/buscar-preview?titulo=\${encodeURIComponent(titulo)}\`);
+                                    const data = await res.json();
+
+                                    if (data.ok) {
+                                        // Autocompleta los campos visuales
+                                        document.getElementById('crearTitulo').value = data.titulo;
+                                        document.getElementById('crearDescripcion').value = data.descripcion;
+                                        document.getElementById('crearImagenUrl').value = data.imagen;
+
+                                        // Valida si es infantil
+                                        const esInfantil = data.genre_ids.includes(16) || data.genre_ids.includes(10751);
+                                        document.getElementById('crearInfantil').checked = esInfantil;
+                                        
+                                        msg.innerText = "¡Información cargada con éxito! Revisa los datos y pega tu URL de Cloudinary.";
+                                        msg.style.color = "#10b981";
+                                    } else {
+                                        msg.innerText = data.mensaje;
+                                        msg.style.color = "#ef4444";
+                                    }
+                                } catch(e) {
+                                    msg.innerText = "Error de conexión con el servidor.";
+                                    msg.style.color = "#ef4444";
+                                }
                             }
                         </script>
                     </body>
