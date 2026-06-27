@@ -3,6 +3,7 @@ const usuario_id = (localStorage.getItem("usuario_id") || sessionStorage.getItem
 
 function cerrarSesion() {
     localStorage.clear(); sessionStorage.clear();
+    window.location.href = "index.html";
 }
 
 function protegerSesion() {

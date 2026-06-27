@@ -689,7 +689,10 @@ function cambiarFuenteVideoPorCalidad(calidad) {
     videoPlayer.currentTime = tiempoActual;
     videoPlayer.play();
 }
-
+function cerrarSesion() {
+    localStorage.clear(); sessionStorage.clear();
+    window.location.href = "index.html";
+}
 /* =========================================
    RECOMENDACIONES Y EVENTOS DE CIERRE
 ========================================= */
